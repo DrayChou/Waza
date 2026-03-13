@@ -10,7 +10,7 @@
 
 <br/>
 
-A Claude Code [skill](https://docs.anthropic.com/en/docs/claude-code/skills) that systematically reviews your project's setup using the six-layer framework: `CLAUDE.md → rules → skills → hooks → subagents → verifiers`. It detects project complexity, runs three parallel diagnostic agents, and outputs a prioritized report telling you what to fix first.
+A Claude Code [skill](https://docs.anthropic.com/en/docs/claude-code/skills) that systematically reviews your project's setup using the six-layer framework: `CLAUDE.md → rules → skills → hooks → subagents → verifiers`. It detects project complexity, runs four parallel diagnostic agents, and outputs a prioritized report telling you what to fix first.
 
 ## Install
 
@@ -33,6 +33,7 @@ The skill automatically detects your project tier (Simple / Standard / Complex) 
 | **CLAUDE.md** | Signal-to-noise ratio, missing Verification/Compact Instructions, prose bloat |
 | **rules/** | Language-specific rules placement, coverage gaps |
 | **skills/** | Description token count, trigger clarity, auto-invoke strategy, frequency-based optimization |
+| **skill security** | Prompt injection, data exfiltration, destructive commands, hardcoded credentials, obfuscation, safety overrides |
 | **hooks** | Pattern field presence, file-type coverage, stale entries |
 | **MCP** | Server count, token cost estimation, context pressure detection |
 | **allowedTools** | Dangerous or stale one-time commands |
@@ -44,9 +45,9 @@ The skill automatically detects your project tier (Simple / Standard / Complex) 
 
 Results are grouped into three priority levels:
 
-- **Critical** — Fix now: rule violations, dangerous permissions, cache-breaking patterns, MCP overhead >12.5%
-- **Structural** — Fix soon: misplaced content, missing hooks, single-layer critical rules
-- **Incremental** — Nice to have: context hygiene, HANDOFF.md adoption, skill frequency tuning
+- **Critical** — Fix now: rule violations, dangerous permissions, cache-breaking patterns, MCP overhead >12.5%, skill security issues (prompt injection, data exfiltration, etc.)
+- **Structural** — Fix soon: misplaced content, missing hooks, single-layer critical rules, skill quality issues (bloated content, broken references)
+- **Incremental** — Nice to have: context hygiene, HANDOFF.md adoption, skill frequency tuning, skill provenance (symlink sources, version tracking)
 
 ## Background
 
