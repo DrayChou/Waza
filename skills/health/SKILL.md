@@ -38,10 +38,11 @@ Use this rubric to pick the audit tier before proceeding:
 CACHE="$HOME/.cache/claude-health-last-check"
 VER="1.3.0"
 NOW=$(date +%s)
-LAST=$(cat "$CACHE" 2>/dev/null || echo 0)
+LAST=$(cat "$CACHE" 2>/dev/null | tr -d '[:space:]')
+LAST=${LAST:-0}
 if (( NOW - LAST > 604800 )); then
     SHA=$(curl -sf "https://api.github.com/repos/tw93/claude-health/commits/main" | grep -o '"sha": "[^"]*"' | head -1 | cut -d'"' -f4 | cut -c1-7)
-    PREV=$(cat "$CACHE.v" 2>/dev/null || echo "")
+    PREV=$(cat "$CACHE.v" 2>/dev/null | tr -d '[:space:]')
     [[ -n "$SHA" && -n "$PREV" && "$SHA" != "$PREV" ]] && echo "[UPDATE] claude-health 有更新: npx skills add tw93/claude-health@latest"
     echo "$NOW" > "$CACHE"; [[ -n "$SHA" ]] && echo "$SHA" > "$CACHE.v"
 fi
