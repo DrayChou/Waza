@@ -1,7 +1,7 @@
 ---
 name: check
-description: Use after completing a task or before merging. Not for exploring ideas or debugging. 融合 Waza Check + code-review + verify-before-done
-version: 1.6.0
+description: Invoke after any implementation task completes or before merging. Reviews the diff, auto-fixes safe issues, runs specialist security and architecture reviewers on large diffs. Not for exploring ideas or debugging.
+version: 3.1.0
 allowed-tools:
   - Bash
   - Read
@@ -16,14 +16,15 @@ hooks:
     - matcher: Bash
       hooks:
         - type: command
-          command: "input=\"$CLAUDE_TOOL_INPUT\"; if echo \"$input\" | grep -qE 'git push --force|git push -f |rm -rf /|DROP TABLE|--no-verify'; then echo 'BLOCK: Destructive command during /check review. Confirm with user first.' >&2; exit 1; fi"
+          command: "bash ${CLAUDE_SKILL_DIR}/scripts/check-destructive.sh"
+          statusMessage: "Checking for destructive commands..."
 ---
 
 # Check: Review Before You Ship
 
 Read the diff, find the problems, fix what can be fixed safely, ask about the rest. Do not claim done until verification has run in this session.
 
-## Phase 1: Get the Diff
+## Get the Diff
 
 ```bash
 git fetch origin
@@ -32,152 +33,193 @@ git diff origin/main
 
 If the base branch is not `main`, ask before running. Already on the base branch? Stop and ask which commits to review.
 
-## Phase 2: Scope Check
+## Scope the Review
+
+Count the diff and classify depth. This determines which reviewers activate.
+
+```bash
+git diff origin/main --stat | tail -1
+```
+
+| Depth | Criteria | Reviewers |
+|-------|----------|-----------|
+| **Quick** | Under 100 lines, 1-5 files | Base review only (this skill) |
+| **Standard** | 100-500 lines, or 6-10 files | Base + conditional specialists |
+| **Deep** | 500+ lines, or 10+ files, or touches auth/payments/data mutation | Base + all relevant specialists + adversarial pass |
+
+State the depth before proceeding. If the diff is Quick, skip to "Did We Build What Was Asked?" and run the standard single-pass flow. If Standard or Deep, continue to "Specialist Review" after completing the standard flow.
+
+## Did We Build What Was Asked?
 
 Before reading the code, check for scope drift:
 - Pull up recent commit messages and any task files
 - Does the diff match the stated goal? Flag anything outside that scope: unrelated files, voluntary additions, missing requirements
-- Label it: **on target** / **drift** / **incomplete**
+- Label it: **on target** / **drift** / **incomplete** and note it, but do not block on it
 
-## Phase 3: Six-Dimension Review
+## What to Look For
 
-Based on `code-review` skill's 6-dimension analysis:
+### Hard stops (fix before merging)
 
-### Hard stops (P0-P1 — fix before merging)
+These are not negotiable:
 
-| 维度 | 检查内容 | 严重性 |
-|------|----------|--------|
-| **安全漏洞** | XSS/注入/SSRF/竞态条件/密钥泄露 | P0-P1 |
-| **正确性 Bug** | 逻辑错误、数据丢失 | P0-P1 |
-| **Injection** | SQL/command/path injection | P0 |
-| **External trust** | 未消毒的 LLM/API 输出 | P1 |
-| **Missing cases** | enum/match 穷举性 | P1 |
-| **Dependency changes** | 非预期的包版本变更 | P1 |
+- **Destructive auto-execution**: any task flagged as "safe" or "auto-run" that modifies user-visible state (history files, config files, stored preferences, installed software, cache entries the user can inspect) must require explicit confirmation. "Safe" means no side effects, not "probably harmless." If a task deletes or rewrites something the user can see, it is not safe by default.
+- **Release artifacts missing**: a GitHub release with an empty body, missing assets, or unuploaded build files is not a completed release. Verify every artifact listed in the release template exists as a local file and has been uploaded before declaring done.
+- **Translated file naming collision**: when placing a file in a language-specific directory (e.g., `_posts_en/`, `en/`), the file name must not repeat the language suffix. Check the naming convention of existing files in the same directory first.
 
-### Soft signals (P2-P3 — flag, do not block)
+- **GitHub issue or PR number mismatch**: before commenting on, closing, or acting on a GitHub issue or PR, verify the number matches the one discussed in this session. Do not rely on memory. Run `gh issue view N` or `gh pr view N` to confirm the title matches before writing.
 
-| 维度 | 检查内容 | 严重性 |
-|------|----------|--------|
-| **SOLID 原则** | SRP/OCP/LSP/ISP/DIP 违规 | P2 |
-| **性能问题** | N+1查询/CPU热点/内存泄漏 | P1-P2 |
-| **错误处理** | 异常吞没/异步错误/边界缺失 | P1-P2 |
-| **边界条件** | 空值处理/空集合/数值限制 | P1-P2 |
-| **死代码** | 未使用代码 | P2-P3 |
-| **代码异味** | 命名/风格不一致 | P3 |
+- **GitHub comment style**: PR review comments and issue replies must be brief (1-2 sentences), natural-sounding, and friendly. Not verbose. Not formatted like a report. Not AI-sounding. If a comment needs more than 2 sentences, it should be structured as a list, not a paragraph.
 
-### Severity Levels
+- **Injection and validation**: SQL, command, path injection; inputs that bypass validation at system entry points
+- **Shared state**: unsynchronized writes, check-then-act races, missing locks
+- **External trust**: output from LLMs, APIs, or user input fed into commands or queries without sanitization; credentials hardcoded or logged
+- **Missing cases**: enum or match exhaustiveness; use grep on sibling values outside the diff to confirm
+- **Unknown identifiers in diff**: any function, method, variable, or type name introduced in the diff that does not exist in the codebase is a hard stop. Before writing or approving a reference to an identifier, grep for it: `grep -r "identifier_name" .` -- if it returns no results outside the diff itself, it does not exist. Do not assume the name is correct from memory.
 
-| 级别 | 名称 | 处理策略 |
-|------|------|----------|
-| **P0** | Critical | 必须阻止合并 |
-| **P1** | High | 合并前应修复 |
-| **P2** | Medium | 修复或创建后续任务 |
-| **P3** | Low | 可选改进 |
+- **Dependency changes**: unexpected additions or version bumps in `package.json`, `Cargo.toml`, `go.mod`, or `requirements.txt`. Flag any new dependency not obviously required by the diff.
 
-## Phase 4: Fix Safe Items
+### Soft signals (flag, do not block)
 
-Fix directly when the correct answer is unambiguous:
-- Clear bugs, null checks on crash paths
-- Style inconsistencies matching surrounding code
-- Trivial test additions
-- Dead code removal
+Worth noting but not merge-blocking:
+
+- Side effects that are not obvious from the function signature
+- Magic literals that should be named constants
+- Dead code, stale comments, style gaps relative to the surrounding code
+- Untested new paths
+- Loop queries, missing indexes, unbounded growth
+
+## Specialist Review (Standard and Deep only)
+
+Load `references/persona-catalog.md` to determine which specialists activate for this diff.
+
+For each specialist that activates: launch it via the Agent tool, passing the full diff and the relevant agent prompt from `agents/`. Run all activated specialists in parallel.
+
+After all agents complete, merge findings:
+- Deduplicate: if two specialists flag the same file and line, keep the more severe finding and note the agreement
+- Cross-reviewer agreement on the same issue raises its priority
+
+Then proceed to Autofix Routing before presenting findings.
+
+## Autofix Routing
+
+Classify each finding from the standard review and specialists:
+
+| Class | Definition | Action |
+|-------|------------|--------|
+| `safe_auto` | Unambiguous, risk-free: typos, missing imports, style inconsistencies | Apply immediately |
+| `gated_auto` | Likely correct but changes behavior: null checks on new paths, error handling additions | Batch into one AskUserQuestion |
+| `manual` | Requires judgment: architecture, behavior changes, security tradeoffs | Present in sign-off |
+| `advisory` | Informational, no code change warranted | Note in sign-off |
+
+Apply all `safe_auto` fixes before presenting anything. Batch all `gated_auto` items into one confirmation block. Never ask separately about each one.
+
+## Adversarial Pass (Deep only)
+
+After all findings are collected, run one focused adversarial pass. Ask: "If I were trying to break this system through this specific diff, what would I exploit?"
+
+Four angles to check (load `references/persona-catalog.md` for detail):
+1. **Assumption violation** -- what does this code assume is always true, and what breaks when it is not?
+2. **Composition failures** -- what breaks when this new code runs concurrently with the rest of the system?
+3. **Cascade construction** -- what sequence of valid operations leads to an invalid state?
+4. **Abuse cases** -- what happens on the 1000th request, during a deploy, or with concurrent mutations?
+
+Suppress adversarial findings below 0.60 confidence. Only file findings with a concrete scenario.
+
+## How to Handle Findings
+
+Fix directly when the correct answer is unambiguous: clear bugs, null checks on crash paths, style inconsistencies matching the surrounding code, trivial test additions.
 
 Batch everything else into a single AskUserQuestion when the fix involves behavior changes, architectural choices, or anything where "right" depends on intent:
 
 ```
 [N items need a decision]
 
-1. [P0/P1] What: ... Suggested fix: ... Keep / Skip?
+1. [hard stop / signal] What: ... Suggested fix: ... Keep / Skip?
 2. ...
 ```
 
-## Phase 5: Judgment Quality
+## GitHub Operations
 
-Ask three questions a senior reviewer would ask:
+Use `gh` CLI for all GitHub interactions. If `gh` is not installed, run `brew install gh && gh auth login` (or guide the user through their platform's install).
 
-- **Right problem?** Does the diff solve what was actually needed, or a slightly different version of it?
-- **Mature approach?** Is the implementation idiomatic for this codebase and language?
-- **Honest edge cases?** Does the code handle nil, empty, zero, concurrent access, and upstream failure?
+```bash
+# Before commenting or closing issues, verify the number
+gh issue view 123 --json title,state --jq '.title'
 
-## Phase 6: Regression Coverage
+# Before merging, check CI status
+gh pr checks
+
+# Create PR with structured body
+gh pr create --title "..." --body "..."
+
+# Review PR diff
+gh pr diff 123
+
+# Leave a comment (keep it 1-2 sentences, natural tone)
+gh pr comment 123 --body "Looks good, one small fix applied."
+```
+
+Do not use the GitHub MCP or raw API when `gh` can do the same thing. `gh` handles auth, pagination, and error messages cleanly.
+
+## Judgment Quality
+
+Beyond correctness, ask three questions a senior reviewer would ask:
+
+- **Right problem?** Does the diff solve what was actually needed, or a slightly different version of it? A technically correct solution to the wrong problem is a bug with extra steps.
+- **Mature approach?** Is the implementation idiomatic for this codebase and language, or does it introduce a pattern that will confuse the next person? Clever code that nobody else can maintain is a liability.
+- **Honest edge cases?** Does the code handle failure modes and boundary conditions explicitly, or does it silently succeed in the happy path and silently corrupt in the others? Check what happens on nil, empty, zero, concurrent access, and upstream failure.
+
+These do not block a merge on their own, but a "no" on any of them is worth flagging explicitly.
+
+## Regression Coverage
 
 For every new code path: trace it, check if a test covers it. If this change fixes a bug, a test that fails on the old code must exist before this is done.
 
-## Phase 7: Verification
+## Verification
 
-Auto-detect and run verification:
+After all fixes are applied, run `scripts/verify.sh` from this skill's directory, or the project's known verification command:
 
 ```bash
-if [ -f Cargo.toml ]; then cargo check && cargo test
-elif [ -f tsconfig.json ]; then npx tsc --noEmit && npm test
-elif [ -f package.json ] && grep -q '"test"' package.json; then npm test
-elif [ -f Makefile ] && grep -q '^test:' Makefile; then make test
-elif [ -f pytest.ini ] || [ -f pyproject.toml ] || find . -maxdepth 2 -name "test_*.py" | grep -q .; then pytest
-else echo "(no test command detected)"; fi
+bash "$(dirname "$0")/../scripts/verify.sh"
 ```
 
-If nothing detected, ask the user for the verification command.
+If nothing is detected, ask the user for the verification command before proceeding.
 
-Paste the full output. Report exact numbers. Done means: command ran in this session and passed.
+Paste the full output. Report exact numbers. Done means: the command ran in this session and passed.
 
-If verification fails: halt. Do not claim done.
+If no verification command exists or the command fails: halt. Do not claim done. Ask the user how to verify before proceeding.
+
+If any of these phrases appear in your reasoning, stop and run the verification command before continuing:
+
+- "should work now" / "should be fine"
+- "probably correct" / "probably fixed"
+- "seems to be working" / "appears to work"
+- "I'm confident" / "clearly fixed"
+- "trivial change, no need to verify"
+
+These are rationalization patterns, not evidence. Verification ran and passed = done. Everything else = not done.
+
+## Gotchas
+
+Real failures from prior sessions, in order of frequency:
+
+- **Commented on the wrong issue.** Left a comment on #249 when the conversation was about #255. Run `gh issue view N` or `gh pr view N` to confirm title before commenting or closing.
+- **PR comments sounded like a report.** User had to iterate multiple times on comment tone. GitHub comments should be 1-2 sentences, natural, like a colleague, not a structured review output.
+- **Announced release done before uploading artifacts.** Pushed the GitHub release with no .dmg/.zip/.sha256 attached. Verify every artifact listed in the release template exists as a local file and has been uploaded.
+- **Language suffix doubled.** Placed `article.en.md` inside `_posts_en/`, generating a duplicate URL. Check the naming convention of existing files in the target directory first.
+- **Skipped verification on "trivial" changes.** "It's a one-line fix" is how trivial changes break things. If the urge to skip arises, run `scripts/verify.sh` anyway.
+- **Deployed without env vars.** Pushed to Vercel while API keys only existed in local `.env.local`. Site returned 401 on every request. Run `vercel env ls` or equivalent and diff against local keys before deploying.
+- **Git push failed from auth mismatch.** Two failed pushes before discovering remote was HTTPS but local expected SSH. Run `git remote -v` and verify auth method before the first push in a new project.
 
 ## Sign-off
 
 ```
 files changed:    N (+X -Y)
 scope:            on target / drift: [what]
+review depth:     quick / standard / deep
 hard stops:       N found, N fixed, N deferred
 signals:          N noted
+specialists:      [security, architecture] or none
 new tests:        N
-verification:     [command] → pass / fail
-```
-
-## Output Template (Structured Report)
-
-```markdown
-## Check 审查报告
-
-**审查文件**: X个文件, Y行变更
-**整体评估**: [APPROVE / REQUEST_CHANGES / COMMENT]
-
-### 维度覆盖
-- ✅ SOLID原则
-- ✅ 安全漏洞
-- ✅ 性能分析
-- ✅ 错误处理
-- ✅ 边界条件
-- ✅ 死代码识别
-
----
-
-## 发现问题
-
-### P0 - Critical
-(无 或 列表)
-
-### P1 - High
-- **[file:line]** 问题标题
-  - **问题描述**: [详细说明]
-  - **修复建议**: [具体方案]
-
-### P2 - Medium
-...
-
-### P3 - Low
-...
-
-## 验证结果
-
-### 已执行
-- [PASS/FAIL] 命令A
-  - 输出摘要：...
-
-### 未执行
-- 命令B
-  - 原因：...
-
-## 结论
-- 是否满足完成标准：是/否
-- 剩余风险：...
+verification:     [command] -> pass / fail
 ```

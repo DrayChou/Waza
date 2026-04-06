@@ -1,7 +1,7 @@
 ---
 name: design
-description: Use when building UI, components, or pages. Not for backend logic or data pipelines.
-version: 1.3.0
+description: Invoke when building any UI, component, page, or visual interface. Produces distinctive design with a committed aesthetic, not generic defaults. Not for backend logic or data pipelines.
+version: 3.0.0
 allowed-tools:
   - Read
   - Write
@@ -63,6 +63,17 @@ If the aesthetic direction conflicts with mobile constraints (e.g., glassmorphis
 The implementation complexity must match the visual ambition. Do not write sparse code for a layered design, or over-engineer a minimal one.
 
 Before submitting, reload `references/design-reference.md` and check the common traps list. Then ask the user to open the result in a browser and confirm it looks right. Code that looks correct in your head but wrong in the browser is not done.
+
+## Gotchas
+
+Real failures from prior sessions, in order of frequency:
+
+- **Used Inter as display font.** It was the path of least resistance. Inter is invisible: it communicates nothing about the design direction. Pick something with a personality.
+- **Generated a template, not a design.** Three cards with identical shadows, identical padding, identical rounded corners. Swapping content in and out left the layout unchanged. That is a template. Redo it.
+- **Claimed it looked right without opening a browser.** Code that renders correctly in your head can still look broken in the browser. Open it, confirm it, then hand off.
+- **Chose glassmorphism and ignored the mobile constraint.** `backdrop-filter` is expensive on low-power devices. Picked the direction without naming the tradeoff. Name conflicts explicitly and decide which wins.
+- **Picked colors that don't commit.** A muted blue-gray that "goes with everything" goes with nothing. Dominant color plus one sharp accent. Commit.
+- **Layout jittered on state transitions.** Switching between idle/connecting/active shifted the UI because element sizes changed per state. All states must occupy the same layout footprint; use fixed dimensions or `min-height`.
 
 ## Handoff
 

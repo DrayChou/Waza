@@ -66,13 +66,27 @@ print('\n\n'.join(p.extract_text() for p in r.pages))
 
 Use `marker` when layout matters (papers, tables). Use `pdftotext` for speed.
 
-## WeChat Public Account
+## Feishu / Lark Document
 
-Requires a local `fetch_weixin.py` with `playwright`, `beautifulsoup4`, `lxml`.
+Built-in script at `scripts/fetch_feishu.py`. Requires `requests` and Feishu app credentials:
 
 ```bash
-python3 /path/to/fetch_weixin.py "{url}"
+pip install requests  # one-time setup
+export FEISHU_APP_ID=your_app_id
+export FEISHU_APP_SECRET=your_app_secret
+python3 "$(dirname "$0")/scripts/fetch_feishu.py" "{url}"
 ```
 
-Output: YAML frontmatter (title, author, date, url) + Markdown body.
-Fallback: use proxy cascade if no local script is available.
+Supports: docx, legacy docs, wiki pages. App needs `docx:document:readonly` and `wiki:wiki:readonly` permissions.
+Output: YAML frontmatter (title, document_id, url) + Markdown body.
+
+## WeChat Public Account
+
+Use the proxy cascade (r.jina.ai / defuddle.md). Works for most articles without any extra tools.
+
+If the proxy is blocked, use the built-in Playwright script as a last resort (requires ~300 MB one-time install):
+
+```bash
+pip install playwright beautifulsoup4 lxml && playwright install chromium
+python3 "$(dirname "$0")/scripts/fetch_weixin.py" "{url}"
+```

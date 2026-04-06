@@ -1,7 +1,7 @@
 ---
 name: read
-description: Use when fetching a URL, web page, or PDF as Markdown. Not for local files already in the repo.
-version: 1.5.0
+description: Invoke when given any URL, web page link, or PDF to read. Fetches the content as clean Markdown via proxy cascade and saves to Downloads. Not for local files already in the repo.
+version: 3.0.0
 allowed-tools:
   - Bash
   - Read
@@ -16,9 +16,9 @@ Convert any URL or local PDF to clean Markdown and save it.
 
 | Input | Method |
 |-------|--------|
-| `mp.weixin.qq.com` | WeChat script |
+| `feishu.cn`, `larksuite.com` | Feishu API script |
 | `.pdf` URL or local PDF path | PDF extraction |
-| Everything else | Proxy cascade |
+| Everything else | Run `scripts/fetch.sh {url}` (proxy cascade with auto-fallback) |
 
 After routing, load `references/read-methods.md` to get the specific commands for the chosen method, then execute.
 

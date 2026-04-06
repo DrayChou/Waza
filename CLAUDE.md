@@ -1,6 +1,6 @@
 # Waza
 
-Personal skill collection for Claude Code. Nine skills covering the complete engineering workflow: think, design, check, hunt, write, learn, read, english, health.
+Personal skill collection for Claude Code. Eight skills covering the complete engineering workflow: think, design, check, hunt, write, learn, read, health.
 
 ## Communication
 
@@ -12,6 +12,8 @@ Personal skill collection for Claude Code. Nine skills covering the complete eng
 ```
 skills/
 ├── check/        -- code review before merging
+│   ├── agents/   -- reviewer-security.md, reviewer-architecture.md
+│   └── references/  -- persona-catalog.md
 ├── design/       -- production-grade frontend UI
 ├── health/       -- Claude Code config audit
 │   └── agents/   -- agent1-context.md, agent2-control.md
@@ -35,20 +37,22 @@ Each skill has a `SKILL.md` (loaded on demand) and a `README.md` (quick referenc
 for f in skills/*/SKILL.md; do head -5 "$f" | grep -q "^name:" && echo "ok: $f" || echo "MISSING name: $f"; done
 
 # Version consistency: SKILL.md must match marketplace.json
-for skill in check design english health hunt learn read think write; do
+for skill in check design health hunt learn read think write; do
   skill_ver=$(grep "^version:" "skills/$skill/SKILL.md" | awk '{print $2}')
   market_ver=$(python3 -c "import json; d=json.load(open('.claude-plugin/marketplace.json')); print([p['version'] for p in d['plugins'] if p['name']=='$skill'][0])")
   [ "$skill_ver" = "$market_ver" ] && echo "ok: $skill $skill_ver" || echo "MISMATCH: $skill SKILL=$skill_ver MARKET=$market_ver"
 done
 
 # Reference files exist for skills that use them
-test -f skills/english/references/english-phrases.md && \
 test -f skills/design/references/design-reference.md && \
 test -f skills/read/references/read-methods.md && \
 test -f skills/write/references/write-zh.md && \
 test -f skills/write/references/write-en.md && \
 test -f skills/health/agents/agent1-context.md && \
-test -f skills/health/agents/agent2-control.md && echo "references: ok"
+test -f skills/health/agents/agent2-control.md && \
+test -f skills/check/agents/reviewer-security.md && \
+test -f skills/check/agents/reviewer-architecture.md && \
+test -f skills/check/references/persona-catalog.md && echo "references: ok"
 
 # marketplace.json is valid JSON
 python3 -c "import json; json.load(open('.claude-plugin/marketplace.json'))" && echo "marketplace.json: ok"
