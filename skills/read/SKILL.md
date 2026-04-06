@@ -1,7 +1,7 @@
 ---
 name: read
 description: Use when fetching a URL, web page, or PDF as Markdown. Not for local files already in the repo.
-version: 1.3.0
+version: 1.4.0
 allowed-tools:
   - Bash
   - Read
@@ -20,7 +20,7 @@ Convert any URL or local PDF to clean Markdown and save it.
 | `.pdf` URL or local PDF path | PDF extraction |
 | Everything else | Proxy cascade |
 
-For method details (proxy cascade, PDF extraction, WeChat handler), load `references/read-methods.md`.
+After routing, load `references/read-methods.md` to get the specific commands for the chosen method, then execute.
 
 ## Output Format
 

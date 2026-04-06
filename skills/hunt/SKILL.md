@@ -1,7 +1,7 @@
 ---
 name: hunt
 description: Use when encountering a bug, crash, or test failure. Not for code review or new features.
-version: 1.0.0
+version: 1.1.0
 allowed-tools:
   - Bash
   - Read
@@ -24,7 +24,7 @@ A patch applied to a symptom creates a new bug somewhere else. Find the origin f
 Start by building a complete picture of what happened:
 
 - Get the exact error, stack trace, and steps to reproduce. If anything is missing, ask one specific question.
-- Run `git log --oneline -20 -- <affected files>`. Regressions almost always live in recent changes.
+- Run `git log --oneline -20` on the files named in the error or stack trace. If no specific files are mentioned, run it on the whole repo. Regressions almost always live in recent changes.
 - Trace the execution path from the symptom backward: follow the data, not intuition.
 - Reproduce it yourself. If you cannot reproduce it reliably, you do not understand it yet.
 

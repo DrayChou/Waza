@@ -1,7 +1,12 @@
 ---
 name: health
-version: 1.6.0
+version: 1.7.0
 description: Run when Claude ignores rules, hooks malfunction, or MCP needs auditing. Not for debugging code or reviewing PRs.
+allowed-tools:
+  - Bash
+  - Read
+  - Agent
+  - AskUserQuestion
 ---
 
 # Claude Code Configuration Health Audit

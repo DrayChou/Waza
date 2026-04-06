@@ -1,7 +1,7 @@
 ---
 name: learn
 description: Use when researching an unfamiliar domain or preparing a research article. Not for quick lookups or single-file reads.
-version: 1.0.0
+version: 1.1.0
 allowed-tools:
   - Bash
   - Read
@@ -23,7 +23,7 @@ AI is a tool in this process, not a replacement for your thinking. Never let AI 
 
 ## Choose Your Mode
 
-Before starting, name which mode fits the goal:
+Before starting, use AskUserQuestion to confirm which mode fits the goal:
 
 | Mode | Goal | Entry point | Exit point |
 |------|------|-------------|------------|
@@ -31,7 +31,7 @@ Before starting, name which mode fits the goal:
 | **Quick Reference** | Build a working mental model fast, no article planned | Phase 2 | Phase 2: cut and keep notes |
 | **Write to Learn** | Already have materials, want to force understanding through writing | Phase 3 | Phase 6: publish |
 
-If unsure, start with Quick Reference. The other modes will become obvious once the materials are in hand.
+If the user is unsure, suggest Quick Reference. Do not proceed until mode is confirmed.
 
 ## Phase 1: Collect
 

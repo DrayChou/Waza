@@ -1,7 +1,7 @@
 ---
 name: think
 description: Use before building anything new or when a plan needs review. Not for bug fixes or small edits.
-version: 2.0.0
+version: 2.1.0
 allowed-tools:
   - Read
   - Grep
@@ -21,7 +21,7 @@ Give opinions directly. Avoid: "That's an interesting approach," "There are many
 
 ## Phase 1: Understand the Problem
 
-Read the relevant files and recent commits first. Then work through the idea one question at a time: purpose first, constraints second, success criteria third.
+Start by running `git log --oneline -10` and reading CLAUDE.md (if present). Then read the files the user mentioned or that are obviously related to the idea (entry points, main modules). Ask if it is unclear which files are relevant. Then work through the idea one question at a time: purpose first, constraints second, success criteria third.
 
 Challenge whether it is the right problem:
 - What does the user actually want to happen? Not the feature described, the outcome they care about.

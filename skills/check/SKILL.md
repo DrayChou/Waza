@@ -1,7 +1,7 @@
 ---
 name: check
 description: Use after completing a task or before merging. Not for exploring ideas or debugging.
-version: 1.0.0
+version: 1.1.0
 allowed-tools:
   - Bash
   - Read
@@ -83,12 +83,18 @@ For every new code path: trace it, check if a test covers it. If this change fix
 
 ## Verification
 
-After all fixes are applied, run the project's own verification command:
+After all fixes are applied, detect and run the project's verification command:
 
 ```bash
-cargo check && cargo test   # Rust
-make test / npm test / pytest  # everything else
+# Auto-detect: check for project files in order
+if [ -f Cargo.toml ]; then cargo test
+elif [ -f package.json ] && grep -q '"test"' package.json; then npm test
+elif [ -f Makefile ] && grep -q '^test:' Makefile; then make test
+elif [ -f pytest.ini ] || [ -f pyproject.toml ] || find . -maxdepth 2 -name "test_*.py" | grep -q .; then pytest
+else echo "(no test command detected)"; fi
 ```
+
+If nothing is detected, ask the user for the verification command before proceeding.
 
 Paste the full output. Report exact numbers. Done means: the command ran in this session and passed.
 

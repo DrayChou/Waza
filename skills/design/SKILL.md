@@ -1,7 +1,7 @@
 ---
 name: design
 description: Use when building UI, components, or pages. Not for backend logic or data pipelines.
-version: 1.1.0
+version: 1.2.0
 allowed-tools:
   - Read
   - Write
@@ -17,14 +17,16 @@ Production-grade UI with a committed visual direction. If it could have been gen
 
 ## Lock the Direction First
 
-Before writing a single line of code, answer four questions:
+Before writing a single line of code, use AskUserQuestion to get answers to these four questions:
 
 1. **Who uses this, and in what context?** A dashboard reviewed by analysts differs from a landing page or an onboarding flow.
 2. **What is the aesthetic direction?** Name it precisely: dense editorial, raw terminal, layered glassmorphism, ink-on-paper, brutalist grid, warm analog. "Clean and modern" is not a direction.
 3. **What is the one thing this leaves in memory?** A distinctive typeface, an unexpected color system, a motion that surprises, an asymmetric layout. Pick one and make it obvious.
 4. **What are the hard constraints?** Framework, bundle size, contrast minimums, keyboard accessibility.
 
-State the direction out loud before writing code. Do not hedge it.
+Do not proceed until all four are answered. State the chosen direction in one sentence before writing any code.
+
+Then load `references/design-reference.md` and check the tech stack conflicts table. Name the single CSS strategy before writing the first component.
 
 ## Typography
 
@@ -56,7 +58,7 @@ Backgrounds should have atmosphere: mesh gradients, subtle noise, geometric text
 
 The implementation complexity must match the visual ambition. Do not write sparse code for a layered design, or over-engineer a minimal one.
 
-Before submitting, load `references/design-reference.md` and check the tech stack conflicts table and common traps list.
+Before submitting, reload `references/design-reference.md` and check the common traps list.
 
 ## Handoff
 
