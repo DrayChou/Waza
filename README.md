@@ -18,7 +18,7 @@ A good engineer does not just write code. They think through requirements, revie
 
 AI makes you faster, but not better:
 
-- You stop thinking before building. A prompt feels faster than a design doc, so architecture decisions get made by whoever responds first.
+- You stop thinking before building. Prompts feel faster than design docs, so architecture decisions get handed to the model.
 - You accept the first output. The diff looks reasonable, so you merge it. Review becomes a rubber stamp instead of a real check.
 - You ship before verifying. The model said it works, so you trust it. The bug surfaces in production instead of before the commit.
 - You skim summaries instead of reading the source. You get an answer without building a mental model, so the next question starts from zero.
