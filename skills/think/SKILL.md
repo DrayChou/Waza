@@ -1,7 +1,7 @@
 ---
 name: think
-description: Use before building anything new or when a plan needs review. Not for bug fixes or small edits.
-version: 2.4.0
+description: Use before building anything new or when a plan needs review. Not for bug fixes or small edits. 融合 Waza Think + preflight-scope：设计验证 + 范围对齐
+version: 2.5.1
 allowed-tools:
   - Read
   - Grep
@@ -74,7 +74,45 @@ Once a direction is approved, check structural correctness before implementation
 
 If any section cannot be meaningfully evaluated from available information, say so explicitly: "Cannot assess X without seeing Y." Do not guess to fill the gap.
 
-## Output
+## Gotchas
+
+Real failures from prior sessions, in order of frequency:
+
+- **Wrong path assumed.** Moved files to `~/project` when the repo was at `~/www/project`. Always run `pwd` or `git rev-parse --show-toplevel` before the first filesystem operation.
+- **Credentials surfaced mid-build.** Asked for DashScope API key after three implementation steps. List every dependency with a one-line explanation of why it is needed, before starting.
+- **Analyzed when execution was requested.** User said "帮我做" and got three options. "帮我做," "优化," "改回去" = execute immediately. No option framework.
+- **Designed around a tool that wasn't available.** Planned an MCP-dependent workflow without checking if the MCP server was loaded. Verify external tool availability before the first design step.
+- **Rejected design restarted from scratch.** User said the direction was wrong. Should have asked what specifically failed and re-entered Phase 2 with narrowed constraints, not a blank slate.
+
+## Output Template (Preflight 对齐)
+
+After Phase 2 approval, output the following structured summary:
+
+```markdown
+## Preflight 对齐
+
+### 1) 目标/范围/约束
+- 目标：...
+- 范围：...
+- 约束/禁区：...
+
+### 2) 计划修改文件
+- 已确认：
+  - path/a
+  - path/b
+- 待确认：
+  - path/c（原因：...）
+
+### 3) 完成标准
+- 必做验证：...
+- 可选验证：...
+
+### 4) 需要你确认
+1. ...?
+2. ...?
+```
+
+## Approved Design Summary
 
 For each issue found in Phase 3:
 - What it is (1 sentence)
