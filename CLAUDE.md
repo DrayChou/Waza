@@ -28,7 +28,7 @@ skills/
 install.sh            -- symlink installer
 ```
 
-Each skill has a `SKILL.md` (loaded on demand) and a `README.md` (quick reference for humans).
+Each skill has a `SKILL.md` (loaded on demand by Claude). Supporting content lives in subdirectories.
 
 ## Verification
 

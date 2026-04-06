@@ -177,10 +177,10 @@ For every new code path: trace it, check if a test covers it. If this change fix
 
 ## Verification
 
-After all fixes are applied, run `scripts/verify.sh` from this skill's directory, or the project's known verification command:
+After all fixes are applied, run `scripts/verify.sh` from this skill via `CLAUDE_SKILL_DIR`, or the project's known verification command:
 
 ```bash
-bash "$(dirname "$0")/../scripts/verify.sh"
+bash "$CLAUDE_SKILL_DIR/scripts/verify.sh"
 ```
 
 If nothing is detected, ask the user for the verification command before proceeding.

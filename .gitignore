@@ -9,6 +9,10 @@ skills-lock.json
 # macOS
 .DS_Store
 
+# Python
+__pycache__/
+*.pyc
+
 # Node
 node_modules/
 npm-debug.log*
