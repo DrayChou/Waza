@@ -51,8 +51,6 @@ Color coding: green below 70%, yellow at 70-85%, red above 85% for context; blue
 curl -sL https://raw.githubusercontent.com/tw93/Waza/main/scripts/setup-statusline.sh | bash
 ```
 
-Requires `jq`. Restart Claude Code after running.
-
 ### English Coaching
 
 English should be every engineer's first language when working with AI. The model thinks in English, the best resources are in English, and writing clearly in English is a skill that compounds over time.
