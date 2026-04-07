@@ -1,7 +1,7 @@
 ---
 name: check
 description: Invoke after any implementation task completes or before merging. Reviews the diff, auto-fixes safe issues, runs specialist security and architecture reviewers on large diffs. Not for exploring ideas or debugging.
-version: 3.1.0
+version: 3.2.0
 allowed-tools:
   - Bash
   - Read
@@ -26,20 +26,11 @@ Read the diff, find the problems, fix what can be fixed safely, ask about the re
 
 ## Get the Diff
 
-```bash
-git fetch origin
-git diff origin/main
-```
-
-If the base branch is not `main`, ask before running. Already on the base branch? Stop and ask which commits to review.
+Obtain the full diff between the current branch and the base branch. If the base branch is not clear, ask. If already on the base branch, ask which commits to review.
 
 ## Scope the Review
 
-Count the diff and classify depth. This determines which reviewers activate.
-
-```bash
-git diff origin/main --stat | tail -1
-```
+Measure the diff size (lines changed, files touched) and classify review depth.
 
 | Depth | Criteria | Reviewers |
 |-------|----------|-----------|
@@ -140,26 +131,11 @@ Batch everything else into a single AskUserQuestion when the fix involves behavi
 
 ## GitHub Operations
 
-Use `gh` CLI for all GitHub interactions. If `gh` is not installed, run `brew install gh && gh auth login` (or guide the user through their platform's install).
+Use `gh` CLI for GitHub interactions. Prefer `gh` over GitHub MCP or raw API.
 
-```bash
-# Before commenting or closing issues, verify the number
-gh issue view 123 --json title,state --jq '.title'
-
-# Before merging, check CI status
-gh pr checks
-
-# Create PR with structured body
-gh pr create --title "..." --body "..."
-
-# Review PR diff
-gh pr diff 123
-
-# Leave a comment (keep it 1-2 sentences, natural tone)
-gh pr comment 123 --body "Looks good, one small fix applied."
-```
-
-Do not use the GitHub MCP or raw API when `gh` can do the same thing. `gh` handles auth, pagination, and error messages cleanly.
+- Before commenting on or closing an issue/PR, verify the number matches this session.
+- Before merging, confirm CI status passes.
+- Keep PR/issue comments brief (1-2 sentences), natural, like a colleague.
 
 ## Judgment Quality
 
@@ -177,10 +153,10 @@ For every new code path: trace it, check if a test covers it. If this change fix
 
 ## Verification
 
-After all fixes are applied, run `scripts/verify.sh` from this skill via `CLAUDE_SKILL_DIR`, or the project's known verification command:
+After all fixes are applied, run `scripts/run-tests.sh` from this skill via `CLAUDE_SKILL_DIR`, or the project's known verification command:
 
 ```bash
-bash "$CLAUDE_SKILL_DIR/scripts/verify.sh"
+bash "$CLAUDE_SKILL_DIR/scripts/run-tests.sh"
 ```
 
 If nothing is detected, ask the user for the verification command before proceeding.
@@ -207,7 +183,7 @@ Real failures from prior sessions, in order of frequency:
 - **PR comments sounded like a report.** User had to iterate multiple times on comment tone. GitHub comments should be 1-2 sentences, natural, like a colleague, not a structured review output.
 - **Announced release done before uploading artifacts.** Pushed the GitHub release with no .dmg/.zip/.sha256 attached. Verify every artifact listed in the release template exists as a local file and has been uploaded.
 - **Language suffix doubled.** Placed `article.en.md` inside `_posts_en/`, generating a duplicate URL. Check the naming convention of existing files in the target directory first.
-- **Skipped verification on "trivial" changes.** "It's a one-line fix" is how trivial changes break things. If the urge to skip arises, run `scripts/verify.sh` anyway.
+- **Skipped verification on "trivial" changes.** "It's a one-line fix" is how trivial changes break things. If the urge to skip arises, run `scripts/run-tests.sh` anyway.
 - **Deployed without env vars.** Pushed to Vercel while API keys only existed in local `.env.local`. Site returned 401 on every request. Run `vercel env ls` or equivalent and diff against local keys before deploying.
 - **Git push failed from auth mismatch.** Two failed pushes before discovering remote was HTTPS but local expected SSH. Run `git remote -v` and verify auth method before the first push in a new project.
 

@@ -1,7 +1,7 @@
 ---
 name: design
 description: Invoke when building any UI, component, page, or visual interface. Produces distinctive design with a committed aesthetic, not generic defaults. Not for backend logic or data pipelines.
-version: 3.0.0
+version: 3.2.0
 allowed-tools:
   - Read
   - Write
@@ -36,11 +36,11 @@ Do not use Inter, Roboto, or system-ui as the primary display typeface. They are
 
 ## Color
 
-Build a system, not a collection of hex values. Use CSS variables. A single dominant color with one or two sharp accents is almost always stronger than an evenly distributed palette. Avoid colors that do not commit to anything.
+Build a system, not a collection of hex values. Use CSS variables. Pick one color that owns the page, then one or two accents that cut against it. Spread evenly across the palette is the safe choice; safe choices look undesigned.
 
 ## Motion and Interaction
 
-One coordinated entrance beats ten scattered hover states. If using React, reach for a motion library. For plain HTML, CSS transitions and `@keyframes` are enough. Put animation budget where attention is: the first thing the user sees, and the most important interaction state.
+Use motion to create presence and hierarchy, not noise. For visually led work, aim for at least three intentional motions: one entrance sequence in the hero, one scroll-linked or depth effect, one hover or reveal that sharpens affordance. If using React, reach for a motion library. For plain HTML, CSS transitions and `@keyframes` are enough.
 
 Timing: entrance animations 200-400ms, exits 150-250ms. Ease-out for entrances, ease-in for exits. The test: if removing the animation changes nothing about how the page feels to use, the animation is decoration. Remove it.
 
@@ -49,6 +49,8 @@ Timing: entrance animations 200-400ms, exits 150-250ms. Ease-out for entrances, 
 The grid is a starting point, not a rule. Controlled asymmetry, overlapping elements, and diagonal emphasis create interfaces that feel designed. Choose a spatial approach: generous breathing room or tight information density. Do not split the difference.
 
 Backgrounds should have atmosphere: mesh gradients, subtle noise, geometric texture, layered depth. Flat white or flat black is rarely the right choice.
+
+Default to cardless sections. If removing the border, shadow, and background from a container does not hurt understanding or interaction, it is not a card.
 
 If the aesthetic direction conflicts with mobile constraints (e.g., glassmorphism on low-power devices, dense editorial on small screens), name the tradeoff explicitly and decide which wins.
 

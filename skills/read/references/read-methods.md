@@ -4,21 +4,21 @@
 
 Try in order. Success = non-empty output with readable content. If a proxy returns empty, an error page, or fewer than 5 lines, treat it as failed and try the next:
 
-### 1. r.jina.ai
-
-```bash
-curl -sL "https://r.jina.ai/{url}"
-```
-
-Wide coverage, preserves image links. Try this first.
-
-### 2. defuddle.md
+### 1. defuddle.md
 
 ```bash
 curl -sL "https://defuddle.md/{url}"
 ```
 
-Cleaner output with YAML frontmatter. Use if r.jina.ai returns empty or errors.
+Cleaner output with YAML frontmatter. Try this first.
+
+### 2. r.jina.ai
+
+```bash
+curl -sL "https://r.jina.ai/{url}"
+```
+
+Wide coverage, preserves image links. Use if defuddle.md returns empty or errors.
 
 ### 3. Local tools
 

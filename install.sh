@@ -34,7 +34,7 @@ else
   read -r REPLY
   if [ "$REPLY" = "y" ] || [ "$REPLY" = "Y" ]; then
     echo "" >> "$CLAUDE_MD"
-    cat "$WAZA_DIR/templates/english-coaching.md" >> "$CLAUDE_MD"
+    cat "$WAZA_DIR/templates/coaching-en.md" >> "$CLAUDE_MD"
     echo "English coaching added to $CLAUDE_MD."
   fi
 fi

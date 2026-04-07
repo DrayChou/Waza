@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 # Fetch a URL as Markdown via proxy cascade.
+# Special thanks to joeseesun for the excellent qiaomu-markdown-proxy project,
+# which inspired the proxy cascade design and fallback logic in this script.
+# https://github.com/joeseesun/qiaomu-markdown-proxy
 # Usage: fetch.sh <url> [proxy_url]
 # Example: fetch.sh https://example.com http://127.0.0.1:7890
 set -euo pipefail
@@ -19,12 +22,12 @@ _has_content() {
   [ "$(echo "$1" | wc -l)" -gt 5 ] && echo "$1" | grep -qv "Don't miss what's happening"
 }
 
-# 1. r.jina.ai - wide coverage, preserves image links
-OUT=$(_curl "https://r.jina.ai/$URL" 2>/dev/null || true)
+# 1. defuddle.md - cleaner output with YAML frontmatter
+OUT=$(_curl "https://defuddle.md/$URL" 2>/dev/null || true)
 if _has_content "$OUT"; then echo "$OUT"; exit 0; fi
 
-# 2. defuddle.md - cleaner output with YAML frontmatter
-OUT=$(_curl "https://defuddle.md/$URL" 2>/dev/null || true)
+# 2. r.jina.ai - wide coverage, preserves image links
+OUT=$(_curl "https://r.jina.ai/$URL" 2>/dev/null || true)
 if _has_content "$OUT"; then echo "$OUT"; exit 0; fi
 
 # 3. agent-fetch - last resort local tool

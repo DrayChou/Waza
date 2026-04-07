@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Fetch WeChat public account article as Markdown using Playwright + BeautifulSoup.
 
-Inspired by joeseesun/markdown-proxy (https://github.com/joeseesun/markdown-proxy).
+Special thanks to joeseesun for the excellent qiaomu-markdown-proxy project,
+which inspired the Playwright-based WeChat scraping approach in this script.
+https://github.com/joeseesun/qiaomu-markdown-proxy
 
 Requirements:
     pip install playwright beautifulsoup4 lxml

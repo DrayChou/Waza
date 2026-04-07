@@ -57,10 +57,10 @@ English should be every engineer's first language when working with AI. The mode
 
 Passive grammar correction on every reply. Claude flags mistakes with the pattern name so you learn why.
 
-> 😇 I very like this feature → I really like this feature (Unnatural phrasing)
+> 😇 it is not good to be read → it's hard to read (Unnatural phrasing)
 
 ```bash
-curl -sL https://raw.githubusercontent.com/tw93/Waza/main/templates/english-coaching.md >> ~/.claude/CLAUDE.md
+curl -sL https://raw.githubusercontent.com/tw93/Waza/main/templates/coaching-en.md >> ~/.claude/CLAUDE.md
 ```
 
 ## Install
@@ -80,6 +80,8 @@ Replace `health` with any skill name. Requires Node 18+ and Claude Code.
 ## Background
 
 Tools like Superpowers and gstack are impressive, but they are heavy. Too many skills, too much configuration, too steep a learning curve for engineers who just want to get things done.
+
+There is a deeper issue with heavy skill collections: every rule the author writes becomes a ceiling. The model can only do what the instructions prescribe, and it cannot outgrow them. Waza takes the opposite approach. Each skill states a goal and the constraints that matter, then gets out of the way. As models improve, that restraint pays compound interest.
 
 Waza is the opposite: eight skills that cover the habits that actually matter. Each one does one thing, has a clear trigger, and stays out of the way. The goal is not completeness. It is the right amount, done well.
 

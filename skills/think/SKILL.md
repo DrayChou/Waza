@@ -1,7 +1,7 @@
 ---
 name: think
 description: Invoke before writing any code for a new feature, design, or architecture decision. Turns rough ideas into approved plans with validated structure. Not for bug fixes or small edits.
-version: 3.1.0
+version: 3.2.0
 allowed-tools:
   - Read
   - Grep
@@ -37,15 +37,9 @@ State the depth in one line: "Depth: Lightweight / Standard / Deep -- reason."
 
 ## Phase 1: Understand the Problem
 
-Start by running `git log --oneline -10` and reading CLAUDE.md (if present). Then read the files the user mentioned or that are obviously related to the idea (entry points, main modules). Ask if it is unclear which files are relevant. Then work through the idea one question at a time: purpose first, constraints second, success criteria third.
+Review recent commit history and read CLAUDE.md (if present). Then read the files the user mentioned or that are obviously related to the idea (entry points, main modules). Ask if it is unclear which files are relevant. Then work through the idea one question at a time: purpose first, constraints second, success criteria third.
 
-**Check the knowledge store first.** If the project has a `docs/solutions/` directory, search for prior decisions or related problems before proposing anything:
-
-```bash
-ls docs/solutions/ 2>/dev/null && grep -rl "keyword from task" docs/solutions/ | head -5 || true
-```
-
-If matches are found, read them before Phase 2. Prior solutions may contain decisions, tradeoffs, or known failure modes that eliminate false starts.
+**Check the knowledge store first.** If the project has a `docs/solutions/` directory, search for prior decisions or related problems before proposing anything. If matches are found, read them before Phase 2. Prior solutions may contain decisions, tradeoffs, or known failure modes that eliminate false starts.
 
 **Confirm the working path before touching the filesystem.** Before creating, moving, or writing files, verify the absolute path with `pwd` or `git rev-parse --show-toplevel`. Do not assume `~/project` and `~/www/project` are the same. If the user gives a relative or ambiguous path, ask once to confirm the full absolute path.
 
@@ -53,14 +47,7 @@ If matches are found, read them before Phase 2. Prior solutions may contain deci
 
 **Verify external tool availability before starting.** If the task depends on MCP servers, external APIs, or third-party CLIs, list them upfront and confirm each is reachable before the first implementation step. A plan that requires a tool that is not loaded is not a plan.
 
-**Check existing work on GitHub.** Before designing, search for related issues and PRs:
-
-```bash
-gh issue list --search "feature keyword" --state all --limit 5
-gh pr list --search "feature keyword" --state all --limit 5
-```
-
-If `gh` is not installed: `brew install gh && gh auth login`.
+**Check existing work on GitHub.** Before designing, search for related issues and PRs. If `gh` is not installed, install it first.
 
 Challenge whether it is the right problem:
 - What does the user actually want to happen? Not the feature described, the outcome they care about.
@@ -120,6 +107,29 @@ Before handing off to implementation, score confidence on three axes:
 If any axis is low: loop back. Low on (1) returns to Phase 1. Low on (2) returns to Phase 2. Low on (3) returns to Phase 3 and names each unresolved unknown explicitly.
 
 If all three are solid: state the confidence assessment in 2-3 sentences at the end of the approved design summary, then stop. Do not proceed into implementation.
+
+## Implementation Protocol
+
+Once the design is approved, enforce one behavior per cycle.
+
+**RED**: Write the smallest test that proves the behavior is missing. Run it. It must fail for the right reason, not from a typo or missing import.
+
+**GREEN**: Write the minimum code to pass the test. No refactor, no extras.
+
+**REFACTOR**: Remove duplication, improve names. Re-run tests after each step.
+
+Do not write production code before a failing test. "Small change" and "obviously works" are not exceptions.
+
+Before claiming done:
+
+```
+Behavior:   [one sentence]
+RED seen:   yes/no
+GREEN seen: yes/no
+Verify:     [command] -> pass/fail
+```
+
+If RED or GREEN was not observed, status is not complete.
 
 ## Gotchas
 

@@ -16,7 +16,7 @@ skills/
 │   └── references/  -- persona-catalog.md
 ├── design/       -- production-grade frontend UI
 ├── health/       -- Claude Code config audit
-│   └── agents/   -- agent1-context.md, agent2-control.md
+│   └── agents/   -- inspector-context.md, inspector-control.md
 ├── hunt/         -- systematic debugging
 ├── learn/        -- research to published output
 ├── read/         -- fetch URL or PDF as Markdown
@@ -48,8 +48,8 @@ test -f skills/design/references/design-reference.md && \
 test -f skills/read/references/read-methods.md && \
 test -f skills/write/references/write-zh.md && \
 test -f skills/write/references/write-en.md && \
-test -f skills/health/agents/agent1-context.md && \
-test -f skills/health/agents/agent2-control.md && \
+test -f skills/health/agents/inspector-context.md && \
+test -f skills/health/agents/inspector-control.md && \
 test -f skills/check/agents/reviewer-security.md && \
 test -f skills/check/agents/reviewer-architecture.md && \
 test -f skills/check/references/persona-catalog.md && echo "references: ok"

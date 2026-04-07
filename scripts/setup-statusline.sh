@@ -20,6 +20,31 @@ fi
 curl -sL "$RAW" -o "$DEST"
 chmod +x "$DEST"
 
+# Check for existing statusLine (skip if already Waza)
+EXISTING=$(python3 -c "
+import json, os
+path = os.path.expanduser('~/.claude/settings.json')
+if os.path.exists(path):
+    try:
+        d = json.load(open(path))
+        sl = d.get('statusLine', {})
+        cmd = sl.get('command', '')
+        if cmd and cmd != 'bash ~/.claude/statusline.sh':
+            print(cmd)
+    except: pass
+" 2>/dev/null)
+
+if [ -n "$EXISTING" ]; then
+  echo "Another statusline is already configured:"
+  echo "  $EXISTING"
+  printf "Replace it with Waza statusline? [Y/n] "
+  read -r ans
+  if [ "$ans" = "n" ] || [ "$ans" = "N" ]; then
+    echo "Skipped. Existing statusline kept."
+    exit 0
+  fi
+fi
+
 # Write statusLine into ~/.claude/settings.json
 python3 - <<'PYEOF'
 import json, os
