@@ -26,20 +26,11 @@ Read the diff, find the problems, fix what can be fixed safely, ask about the re
 
 ## Get the Diff
 
-```bash
-git fetch origin
-git diff origin/main
-```
-
-If the base branch is not `main`, ask before running. Already on the base branch? Stop and ask which commits to review.
+Obtain the full diff between the current branch and the base branch. If the base branch is not clear, ask. If already on the base branch, ask which commits to review.
 
 ## Scope the Review
 
-Count the diff and classify depth. This determines which reviewers activate.
-
-```bash
-git diff origin/main --stat | tail -1
-```
+Measure the diff size (lines changed, files touched) and classify review depth.
 
 | Depth | Criteria | Reviewers |
 |-------|----------|-----------|
@@ -140,26 +131,11 @@ Batch everything else into a single AskUserQuestion when the fix involves behavi
 
 ## GitHub Operations
 
-Use `gh` CLI for all GitHub interactions. If `gh` is not installed, run `brew install gh && gh auth login` (or guide the user through their platform's install).
+Use `gh` CLI for GitHub interactions. Prefer `gh` over GitHub MCP or raw API.
 
-```bash
-# Before commenting or closing issues, verify the number
-gh issue view 123 --json title,state --jq '.title'
-
-# Before merging, check CI status
-gh pr checks
-
-# Create PR with structured body
-gh pr create --title "..." --body "..."
-
-# Review PR diff
-gh pr diff 123
-
-# Leave a comment (keep it 1-2 sentences, natural tone)
-gh pr comment 123 --body "Looks good, one small fix applied."
-```
-
-Do not use the GitHub MCP or raw API when `gh` can do the same thing. `gh` handles auth, pagination, and error messages cleanly.
+- Before commenting on or closing an issue/PR, verify the number matches this session.
+- Before merging, confirm CI status passes.
+- Keep PR/issue comments brief (1-2 sentences), natural, like a colleague.
 
 ## Judgment Quality
 

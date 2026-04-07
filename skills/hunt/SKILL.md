@@ -24,7 +24,7 @@ A patch applied to a symptom creates a new bug somewhere else. Find the origin f
 Start by building a complete picture of what happened:
 
 - Get the exact error, stack trace, and steps to reproduce. If anything is missing, ask one specific question.
-- Run `git log --oneline -20` on the files named in the error or stack trace. If no specific files are mentioned, run it on the whole repo. Regressions almost always live in recent changes.
+- Review recent changes to the files named in the error or stack trace. Regressions almost always live in recent commits.
 - Trace the execution path from the symptom backward: follow the data, not intuition.
 - Reproduce it yourself. If you cannot reproduce it reliably, you do not understand it yet.
 
@@ -53,27 +53,11 @@ Pay attention to deflection. When a developer or user says "that part doesn't ma
 
 ## Check the Knowledge Store
 
-Before deep investigation, search for prior solutions to the same or similar bug:
-
-```bash
-ls docs/solutions/ 2>/dev/null && grep -rl "keyword from error" docs/solutions/ | head -5 || true
-```
-
-If a match is found, read the solution file. It may contain the root cause, what approaches failed, and the fix. This can save an entire investigation.
+Before deep investigation, search for prior solutions to the same or similar bug in `docs/solutions/` (if it exists). If a match is found, read the solution file. It may contain the root cause, what approaches failed, and the fix. This can save an entire investigation.
 
 ## Check for Known Issues
 
-Before deep investigation, check if this bug is already known:
-
-```bash
-# Search open issues for the symptom
-gh issue list --search "keyword from error" --state open
-
-# Check recent CI failures for the same pattern
-gh run list --status failure --limit 5
-```
-
-If `gh` is not installed: `brew install gh && gh auth login`.
+Before deep investigation, search open issues and recent CI failures for the same symptom. If `gh` is not installed, install it first.
 
 ## Confirm or Discard the Hypothesis
 

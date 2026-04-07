@@ -37,15 +37,9 @@ State the depth in one line: "Depth: Lightweight / Standard / Deep -- reason."
 
 ## Phase 1: Understand the Problem
 
-Start by running `git log --oneline -10` and reading CLAUDE.md (if present). Then read the files the user mentioned or that are obviously related to the idea (entry points, main modules). Ask if it is unclear which files are relevant. Then work through the idea one question at a time: purpose first, constraints second, success criteria third.
+Review recent commit history and read CLAUDE.md (if present). Then read the files the user mentioned or that are obviously related to the idea (entry points, main modules). Ask if it is unclear which files are relevant. Then work through the idea one question at a time: purpose first, constraints second, success criteria third.
 
-**Check the knowledge store first.** If the project has a `docs/solutions/` directory, search for prior decisions or related problems before proposing anything:
-
-```bash
-ls docs/solutions/ 2>/dev/null && grep -rl "keyword from task" docs/solutions/ | head -5 || true
-```
-
-If matches are found, read them before Phase 2. Prior solutions may contain decisions, tradeoffs, or known failure modes that eliminate false starts.
+**Check the knowledge store first.** If the project has a `docs/solutions/` directory, search for prior decisions or related problems before proposing anything. If matches are found, read them before Phase 2. Prior solutions may contain decisions, tradeoffs, or known failure modes that eliminate false starts.
 
 **Confirm the working path before touching the filesystem.** Before creating, moving, or writing files, verify the absolute path with `pwd` or `git rev-parse --show-toplevel`. Do not assume `~/project` and `~/www/project` are the same. If the user gives a relative or ambiguous path, ask once to confirm the full absolute path.
 
@@ -53,14 +47,7 @@ If matches are found, read them before Phase 2. Prior solutions may contain deci
 
 **Verify external tool availability before starting.** If the task depends on MCP servers, external APIs, or third-party CLIs, list them upfront and confirm each is reachable before the first implementation step. A plan that requires a tool that is not loaded is not a plan.
 
-**Check existing work on GitHub.** Before designing, search for related issues and PRs:
-
-```bash
-gh issue list --search "feature keyword" --state all --limit 5
-gh pr list --search "feature keyword" --state all --limit 5
-```
-
-If `gh` is not installed: `brew install gh && gh auth login`.
+**Check existing work on GitHub.** Before designing, search for related issues and PRs. If `gh` is not installed, install it first.
 
 Challenge whether it is the right problem:
 - What does the user actually want to happen? Not the feature described, the outcome they care about.
