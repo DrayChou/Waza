@@ -160,6 +160,22 @@ For each issue found in Phase 3:
 
 Close with one-line status per architecture section: clear, flagged, or skipped with reason.
 
+## Handoff to Implementation
+
+Design approved and ready to execute? Hand off the plan to a persistent file-based planning system:
+
+```bash
+bash ${CLAUDE_PLUGIN_ROOT}/../planning-with-files-zh/scripts/init-session.sh <feature-name>
+```
+
+This creates `docs/计划/{YYYYMMDD}-{feature}/` containing `task_plan.md`, `findings.md`, `progress.md`. Copy the approved phases from Phase 3 into `task_plan.md`. The planning-with-files-zh skill's hooks then track progress from there.
+
+For spec-kit style artifacts, also save to the same directory:
+- `SPEC.md` — requirements (what & why)
+- `PLAN.md` — technical approach (how)
+
+Both are optional but useful when the feature spans multiple weeks or modules.
+
 ## Preflight 对齐模板（可选使用）
 
 After Phase 2 approval, output the following structured summary for explicit user alignment:
