@@ -73,6 +73,10 @@ case "$TARGET" in
     trap 'rm -f "$tmp"' EXIT
     curl -fsSL "$RAW" -o "$tmp"
 
+    # Inline Python: this script is installed via `curl | bash` (no companion
+    # .py file on the user's machine), so the AGENTS.md edit logic stays self-
+    # contained here. py_compile cannot syntax-check it; bash -n catches
+    # quoting bugs in the shell layer.
     MARKER_LABEL="$MARKER_LABEL" python3 - "$tmp" "$HOME/.codex/AGENTS.md" <<'PYEOF'
 import os
 import sys

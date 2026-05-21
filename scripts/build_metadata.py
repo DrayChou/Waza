@@ -2,8 +2,8 @@
 """Generate Waza distribution metadata from a single source of truth.
 
 Source of truth:
-  - VERSION                            top-level version string
-  - skills/<name>/SKILL.md frontmatter name, description, version
+  - VERSION                            top-level version string (single source)
+  - skills/<name>/SKILL.md frontmatter name, description, dispatch_intent
 
 Generated files:
   - .claude-plugin/marketplace.json    full plugin manifest
@@ -31,8 +31,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
-# Reuse the frontmatter parser already vetted in verify_skills.py.
-from verify_skills import parse_frontmatter  # noqa: E402
+from skill_frontmatter import parse_frontmatter  # noqa: E402
 
 
 # Hand-maintained marketplace constants. Kept here (not in frontmatter) because

@@ -63,39 +63,9 @@ fi
 SIZE=$(wc -c < "$OUT" | tr -d ' ')
 echo "OK: wrote $OUT (${SIZE} bytes)"
 
-# Post-package validation: unzip to a temp dir and verify frontmatter integrity.
+# Post-package validation lives in scripts/validate_package.py so it's
+# py_compile-checked in CI and unit-testable.
 VALIDATE_DIR="$(mktemp -d)"
 trap 'rm -rf "$VALIDATE_DIR"' EXIT
 unzip -q "$OUT" -d "$VALIDATE_DIR"
-
-python3 - "$VALIDATE_DIR" <<'VALIDATE_PYEOF'
-import sys
-from pathlib import Path
-
-stage = Path(sys.argv[1])
-root_skill = stage / "SKILL.md"
-if not root_skill.exists():
-    print("POST-PACKAGE ERROR: SKILL.md missing from extracted ZIP", file=sys.stderr)
-    raise SystemExit(1)
-
-text = root_skill.read_text()
-
-# Verify ninja marker is present.
-if "Prefix your first line with 🥷 inline" not in text:
-    print("POST-PACKAGE ERROR: root SKILL.md missing ninja prefix instruction", file=sys.stderr)
-    raise SystemExit(1)
-
-# Verify all 8 skill sections are inlined.
-expected = ["think", "design", "check", "hunt", "write", "learn", "read", "health"]
-for skill in expected:
-    if f"# SKILL: {skill}" not in text:
-        print(f"POST-PACKAGE ERROR: SKILL section '{skill}' not inlined in root SKILL.md", file=sys.stderr)
-        raise SystemExit(1)
-
-# Verify no broken references to nested SKILL.md paths remain.
-if "skills/check/SKILL.md" in text or "skills/think/SKILL.md" in text:
-    print("POST-PACKAGE ERROR: root SKILL.md still contains nested SKILL.md path references", file=sys.stderr)
-    raise SystemExit(1)
-
-print("ok: post-package validation passed")
-VALIDATE_PYEOF
+python3 "$ROOT/scripts/validate_package.py" "$VALIDATE_DIR"
