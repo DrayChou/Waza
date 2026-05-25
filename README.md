@@ -37,7 +37,7 @@ Each engineering habit gets an installed skill. In Claude Code, type the slash c
 | [`/hunt`](skills/hunt/SKILL.md) | Any bug, regression, or unexpected behavior | Systematic debugging. Root cause confirmed before any fix is applied, especially when something used to work. |
 | [`/write`](skills/write/SKILL.md) | Writing or editing prose | Rewrites prose to sound natural in Chinese and English. Cuts stiff, formulaic phrasing. |
 | [`/learn`](skills/learn/SKILL.md) | Diving into an unfamiliar domain | Six-phase research workflow: collect, digest, outline, fill in, refine, then self-review and publish. |
-| [`/read`](skills/read/SKILL.md) | Any URL or PDF | Fetches content as clean Markdown with platform-specific routing. Special handling for GitHub, PDFs, WeChat, and Feishu. Privacy-first: defaults to a local extractor; `--use-proxy` opts into defuddle.md / r.jina.ai for JS-heavy pages. |
+| [`/read`](skills/read/SKILL.md) | Any URL or PDF | Reads URLs and PDFs with platform-specific routing. Plain reads return a concise summary; Markdown output is used when asked to convert, quote, cite, save, or feed downstream work. |
 | [`/health`](skills/health/SKILL.md) | Auditing Agent Health | Checks Codex, Claude Code, project instructions, verifier output, and AI maintainability with a budget-aware summary pass before deep inspection. |
 
 Each skill is a folder with reference docs, helper scripts, and gotchas from real failures.
@@ -77,7 +77,7 @@ Download [waza.zip](https://github.com/tw93/Waza/releases/latest/download/waza.z
 
 **Pi coding agent**
 
-Pi can load Waza's standard `skills/<name>/SKILL.md` layout from the repo or from package metadata that points `pi.skills` at `./skills`. The npm package metadata is ready for `@tw93/waza`; `/health` audits Pi settings, configured packages, and local skill roots alongside Claude Code and Codex.
+Pi can load Waza's standard `skills/<name>/SKILL.md` layout from the repo or from the published `@tw93/waza` npm package, which exposes `pi.skills` metadata pointing at `./skills`. `/health` audits Pi settings, configured packages, and local skill roots alongside Claude Code and Codex.
 
 **Update**
 
