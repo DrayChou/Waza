@@ -207,6 +207,8 @@ State the depth before proceeding.
 
 Before reading code, check scope drift: do the diff and the stated goal match? Label: **on target** / **drift** / **incomplete**.
 
+Also check surgical traceability: every changed file and every new public surface must trace back to the user's stated goal. If a file, dependency, config knob, abstraction, generated artifact, workflow permission, or release behavior cannot be explained in one sentence from the request, label it drift until proven necessary.
+
 Drift signals (examples, not exhaustive -- any one is enough to label drift):
 - A changed file has no connection to the stated goal
 - The diff includes pure refactoring (renames, formatting, restructuring) when the goal was a bug fix or feature
