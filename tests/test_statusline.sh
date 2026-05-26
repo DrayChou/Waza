@@ -31,4 +31,35 @@ printf '%s' "$json1" | HOME="$tmpdir2" bash "$ROOT/scripts/statusline.sh" >"$tmp
 grep -q '12%' "$tmpdir2/out"
 grep -q '63%' "$tmpdir2/out"
 
+# Empty input must not crash; both rate-limit slots fall back to "--".
+tmpdir3=$(make_tmpdir)
+printf '' | HOME="$tmpdir3" bash "$ROOT/scripts/statusline.sh" >"$tmpdir3/out"
+grep -q '5h: --' "$tmpdir3/out"
+grep -q '7d: --' "$tmpdir3/out"
+
+# Context >= 85% must render with red ANSI (\033[31m); usage >= 90% likewise red.
+tmpdir4=$(make_tmpdir)
+json_hot='{"context_window":{"current_usage":{"input_tokens":90},"context_window_size":100},"rate_limits":{"five_hour":{"used_percentage":95,"resets_at":2000000000},"seven_day":{"used_percentage":10,"resets_at":2000003600}}}'
+printf '%s' "$json_hot" | HOME="$tmpdir4" bash "$ROOT/scripts/statusline.sh" >"$tmpdir4/out"
+grep -q $'\033\[31m90%' "$tmpdir4/out"
+grep -q $'\033\[31m95%' "$tmpdir4/out"
+
+# resets_at in the past must clear the rate-limit slot, no stale "(0m)" output.
+tmpdir5=$(make_tmpdir)
+json_expired='{"context_window":{"current_usage":{"input_tokens":5},"context_window_size":100},"rate_limits":{"five_hour":{"used_percentage":42,"resets_at":1000000000},"seven_day":{"used_percentage":50,"resets_at":1000003600}}}'
+printf '%s' "$json_expired" | HOME="$tmpdir5" bash "$ROOT/scripts/statusline.sh" >"$tmpdir5/out"
+grep -q '5h: --' "$tmpdir5/out"
+grep -q '7d: --' "$tmpdir5/out"
+
+# Stale cache (older than CACHE_MAX_AGE = 6h) must not surface as live values
+# when the current input lacks rate_limits.
+tmpdir6=$(make_tmpdir)
+mkdir -p "$tmpdir6/.cache/waza-statusline"
+printf '%s\n' '{"rate_limits":{"five_hour":{"used_percentage":77,"resets_at":2000000000},"seven_day":{"used_percentage":88,"resets_at":2000003600}}}' \
+  > "$tmpdir6/.cache/waza-statusline/last.json"
+touch -t 200001010000 "$tmpdir6/.cache/waza-statusline/last.json"
+printf '%s' "$json2" | HOME="$tmpdir6" bash "$ROOT/scripts/statusline.sh" >"$tmpdir6/out"
+grep -q '5h: --' "$tmpdir6/out"
+grep -q '7d: --' "$tmpdir6/out"
+
 echo "statusline smoke: ok"
