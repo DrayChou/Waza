@@ -1,133 +1,135 @@
 ---
 name: learn
-description: "Invoke when diving deep into an unfamiliar domain, preparing a research article, or turning collected sources into publishable output. Runs a six-phase workflow: collect, digest, outline, fill in, refine, publish. Not for quick lookups or single-file reads."
-version: 3.2.0
-allowed-tools:
-  - Bash
-  - Read
-  - Write
-  - Edit
-  - Grep
-  - Glob
-  - WebSearch
-  - AskUserQuestion
+description: "Runs a six-phase research workflow that turns unfamiliar domains, source bundles, or collected material into publish-ready output. Use when users ask 学习一下/深入研究/研究一下/整理成文章/deep dive/compile sources or need one coherent reference from many inputs. Not for quick lookups or single-file reads."
+when_to_use: "学习一下, 深入研究, 研究一下, 整理成文章, 把这批材料整理, 一站式参考, 一篇就够, 整理成长文, research, deep dive, help me understand, compile sources, unfamiliar domain"
+dispatch_intent: "Deep research, unfamiliar domain, compile sources into output"
 ---
 
 # Learn: From Raw Materials to Published Output
 
-Deep research structured like engineering work. Six phases, each with a clear role for you and a clear role for AI.
+Prefix your first line with 🥷 inline, not as its own paragraph.
 
-The measure of learning is not how much you read. It is how much you produce. Input that never becomes output is just consumption.
+Collect, organize, translate, explain, structure. Support the user's thinking; do not replace it.
 
-AI is a tool in this process, not a replacement for your thinking. Never let AI read for you, decide for you, or write in your voice without your direction. The moment you outsource the thinking, the learning stops.
+## Outcome Contract
 
-## Choose Your Mode
+- Outcome: unfamiliar material becomes a reliable mental model, reference, article, or notes set the user can use.
+- Done when: primary sources are collected or supplied, contradictions are handled explicitly, and the final structure teaches the topic without hiding uncertainty.
+- Evidence: source URLs or files, fetched content, notes from digestion, outline decisions, and self-review against the requested output.
+- Output: research notes, outline, publish-ready draft, or canonical reference, matching the chosen mode.
 
-Before starting, use AskUserQuestion to confirm which mode fits the goal:
+**Boundary**: single URL that only needs fetching belongs in `/read`. A single URL that needs summary or analysis can use `/read` as the fetch step, but the final answer should satisfy the user's requested summary or analysis. `/learn` is for multi-source research that produces a new structured output.
 
-| Mode | Goal | Entry point | Exit point |
-|------|------|-------------|------------|
-| **Deep Research** | Understand a domain well enough to write about it | Phase 1 | Phase 6: publish |
-| **Quick Reference** | Build a working mental model fast, no article planned | Phase 2 | Phase 2: cut and keep notes |
-| **Write to Learn** | Already have materials, want to force understanding through writing | Phase 3 | Phase 6: publish |
+## Pre-check
 
-If the user is unsure, suggest Quick Reference. Do not proceed until mode is confirmed.
+Check whether `/read` and `/write` skills are installed (look for their SKILL.md in the skills directories). Warn if missing, do not block:
+- `/read` missing -- Phase 1 fetch falls back to native `WebFetch` / `curl`; coverage on paywalled, JS-heavy, and Chinese-platform pages degrades.
+- `/write` missing -- Phase 5 AI-pattern stripping falls back to manual scan. Phases 1-4 are unaffected.
+
+## Choose Mode
+
+Ask the user to confirm the mode, using the environment's native question or approval mechanism if it has one:
+
+| Mode | Goal | Entry | Exit |
+|------|------|-------|------|
+| **Deep Research** | Understand a domain well enough to write about it | Phase 1 | Phase 6: publish-ready draft |
+| **Quick Reference** | Build a working mental model fast, no article planned | Phase 2 | Phase 2: notes only |
+| **Write to Learn** | Already have materials, force understanding through writing | Phase 3 | Phase 6: publish-ready draft |
+| **Canonical Article** | One article that covers a topic so thoroughly readers need nothing else | Phase 1 | Phase 6: single authoritative reference |
+
+If unsure, suggest Quick Reference.
+
+## Canonical Article Mode
+
+Activate when: "一篇就够", "一站式参考", "整理成长文", "目的是大家只需要看这篇就好了", or the user wants a single authoritative reference on a topic.
+
+Goal: after reading the article, no one should need to search for anything else on this topic.
+
+Additional requirements on top of standard Deep Research:
+- Every major sub-topic must have its own section; nothing left as a footnote
+- Include worked examples, not just principles
+- Cover common mistakes and how to avoid them
+- Add a "Further Reading" section with the 3-5 sources that go deepest; flag which ones are the best starting points
+- Phase 6 self-review must confirm: "Could a reader implement/understand this from this article alone?"
 
 ## Phase 1: Collect
 
-Gather only high-quality primary sources. For a technical domain this means: recent papers that introduced key ideas, official model and product blogs from the labs, posts from the people who built the thing, university course materials from the last two years, and canonical "build it from scratch" repositories.
+Gather primary sources only: papers that introduced key ideas, official lab/product blogs, posts from builders, canonical "build it from scratch" repositories. Not summaries. Not explainers.
 
-Not summaries. Not explainers. Not "top 10 things you need to know." Sources.
+Three ordered steps per source -- no shortcuts, no merging:
 
-For each source: download it, convert to Markdown, clean, and file it into a structured research directory organized by sub-topic.
+1. **Discover** -- use an installed search plugin (e.g., PipeLLM) to map the landscape, then deep-search the 2-3 most promising sub-topics. No plugin: use the environment's native web search. Output is a URL list; do not fetch content here.
+2. **Fetch** -- every URL goes through `/read` when available. `/read` owns the proxy cascade, paywall detection, and platform routing (WeChat, Feishu, PDF, GitHub). Native fetch tools and raw `curl` silently fail on JS-heavy or paywalled sites and skip all of that. If `/read` is missing (Pre-check warned), fall back to native fetch and accept reduced coverage.
+3. **File** -- tell `/read` the research project's source directory when one exists. If no directory was specified, let `/read` use a per-session temp directory and return the saved path. Move or index saved files into sub-topic directories after fetch returns. Move, don't refetch.
 
-```bash
-# Convert a URL to Markdown and save it
-# Use /read for individual pages
-# For bulk work: automate with curl + r.jina.ai or a download script
-```
-
-The goal at the end of Phase 1: a local, organized repository of raw materials.
-
-For a blog post or article, 5-10 strong sources is usually enough. For a deep technical survey, 15-20. If you have been collecting for an hour and have not started reading, you are collecting to avoid the harder work. Stop and move to Phase 2.
+Target: 5-10 sources for a blog post, 15-20 for a deep technical survey.
 
 ## Phase 2: Digest
 
-Work through the materials yourself. For each piece:
+Work through the materials. For each piece: read it fully, keep what is good, cut what is not. At the end of this phase, cut roughly half of what was collected.
 
-- If you understand it: read it fully, keep what is good, delete what is not.
-- If you do not understand it: ask Claude to explain the specific part that is unclear. For dense technical content, ask for a Chinese translation. Do not ask for a summary of the whole thing.
-- If there is code: run it locally if possible. If not, read the structure and understand what each part does.
+For key claims, ask before including in the outline:
+- Does this idea appear in at least two different contexts from the same source?
+- Can this framework predict what the source would say about a new problem?
+- Is this specific to this source, or would any expert in the field say the same thing?
 
-At the end of this phase, cut roughly half of what you collected. If you cannot decide what to cut, the material was not strong enough.
+Generic wisdom is not worth distilling. Passes two or three: belongs in the outline. Passes one: background material. Passes zero: cut it.
 
-For key concepts, try cutting across multiple angles: how did this idea evolve historically? What is the opposite claim? What does it look like in practice vs. in theory? What breaks if you remove it? This kind of multi-dimensional interrogation builds a real mental model, not just a definition.
+When two sources contradict on a factual claim, note both positions and the evidence each gives. Do not silently pick one.
 
-For key claims and frameworks, apply three-layer verification before including them in your outline:
+### Conversation Or Review Distillation
 
-1. **Cross-domain recurrence.** Does this idea appear in at least two different contexts from the same source? A claim that shows up in one talk is a quote. A claim that appears in books, interviews, and decisions is a belief.
-2. **Generative power.** Can you use this framework to predict what the source would say about a new problem they have not addressed? If yes, it is a real mental model. If not, it is a surface observation.
-3. **Distinctiveness.** Is this specific to this source, or would any expert in the field say the same thing? Generic wisdom is not worth distilling.
+When the input is a recent conversation, project review, scorecard, or diagnostic report, treat it as raw material:
 
-A claim that passes all three belongs in your outline. One that passes only one is background material. Zero passes: cut it.
-
-For fields with a research lineage, trace the intellectual genealogy: what problem was the foundational paper or idea responding to? What did it critique or improve on? Follow that chain backward two or three steps, then look forward at what built on top of it. Understanding a field as a sequence of problems being passed forward is more durable than understanding it as a set of current facts.
-
-Claude's role here: explain, translate, answer specific questions. Not summarize or evaluate on your behalf.
+- Extract repeated workflow failures, invariants, and verifier surfaces.
+- Drop dated line numbers, current-score framing, private paths, one-machine setup, and repo-specific commands unless the output is explicitly for that same repo.
+- Map each durable lesson to its target layer: project docs, shared rules, skill references, or deterministic scripts.
+- Keep evidence snippets only as notes for yourself; do not paste raw conversation history into the final artifact.
 
 ## Phase 3: Outline
 
-Once you have a working mental model of the domain, write an outline for the article.
+Write the outline for the article. For each section: note the source materials it draws from. If a section has no sources, either it does not belong or a source needs to be found first.
 
-The outline must answer: what do you want to say, and what does your reader need to know to follow it? These are not the same question. Know your reader's level and write for that level, not above it.
-
-For each section in the outline: note the source materials it draws from. If a section has no sources, either it does not belong in the article or you need to find the source.
-
-The outline is a contract with yourself. Do not start filling it in until it is solid.
+Do not start Phase 4 until the outline is solid.
 
 ## Phase 4: Fill In
 
-Work through the outline section by section. This is the repetition phase: revisiting material you already processed, synthesizing it into continuous prose, filling gaps as you find them.
+Work through the outline section by section. If a section is hard to write, the mental model is still weak there: return to Phase 2 for that sub-topic. The outline may change, and that is fine.
 
-You will end up with a long, somewhat rambling draft. That is correct. Do not edit while writing. Get it all down first.
+Stall signals (any one means the mental model is incomplete for this section):
+- You have rewritten the opening sentence three or more times without settling
+- The section relies on a single source and you cannot cross-check the claim
+- You need a new source that was not collected in Phase 1
+- The paragraph makes a claim you could not explain to someone out loud
 
-If a section is hard to write, it usually means the mental model is still weak in that area. Go back to Phase 2 for that sub-topic rather than forcing through. The outline may need to change, and that is fine.
+When stalled: return to Phase 2 for that sub-topic, not for the whole article.
 
-## Phase 5: Refine with AI
+## Phase 5: Refine
 
-Now hand the draft to Claude with a specific brief:
-
-- Remove redundant and verbose passages without changing the meaning or your voice
+Pass the draft with a specific brief:
+- Remove redundant and verbose passages without changing meaning or voice
 - Flag places where the argument does not flow
-- Identify gaps: places where a concept is used before it is explained, or where a claim needs a source
+- Identify gaps: concepts used before they are explained, claims needing sources
 
-Work through the suggestions yourself. Accept, reject, or modify each one. Do not accept blindly. This phase often surfaces things you missed in Phase 2, which means more learning.
+Do not summarize sections the user has not written. Do not draft new sections from scratch. Edits only.
 
-Before accepting Claude's edits, run `/write` on the refined draft to strip any AI patterns that crept in during the refinement process.
+Then strip AI patterns from the draft. If `/write` is installed, invoke it. If not, do it manually: scan for filler phrases, binary contrasts, dramatic fragmentation, and overused adverbs. Cut them without changing meaning.
 
-## Phase 6: Self-Review and Publish
+## Phase 6: Self-review and Publish Readiness
 
-Read the entire article yourself, not with AI. Read it as your target reader would: linearly, without jumping back.
+The user reads the entire article linearly before publishing. Not with AI. Mark everything that feels off, fix it, read again. Two passes minimum.
 
-Mark everything that feels off: unclear sentences, abrupt transitions, sections that drag. Fix them. Read again. Two full passes is the minimum.
+When it reads clean from start to finish, the draft is ready for the user to publish.
 
-When it reads clean from start to finish: publish it.
+**After the user confirms the article is ready to publish, stop.** Do not upload, post, distribute, or perform any publish action unless explicitly asked.
 
-One concern to set aside: "what if no one reads it." If the content has substance, readers will find it. That concern is not a reason to skip publishing. It is a reason to make sure the content has substance.
+## Gotchas
 
-## At Any Phase: What to Ask Claude
-
-| Situation | Useful prompt |
-|-----------|---------------|
-| Something is unclear | "Explain [concept] to someone who knows [adjacent field] but not this one" |
-| Dense technical paper | "Translate this section to Chinese, keep technical terms in English" |
-| Evaluating a source | "What is the main claim here, and what evidence supports it?" |
-| Outline feedback | "What is missing from this outline for a reader who knows [level]?" |
-| Draft refinement | "Cut the redundancy from this section without changing my voice or meaning" |
-| Gap detection | "What would a reader need to know before reading this section?" |
-
-## Red Lines
-
-- Do not ask Claude to summarize a paper you have not read. Read it yourself.
-- Do not let Claude write sections of the article from scratch. Fill them in yourself, then refine.
-- Do not skip Phase 6 because "AI already reviewed it." AI read it for fluency. You need to read it for truth.
+| What happened | Rule |
+|---------------|------|
+| Collected 30 secondary explainers instead of primary sources | Phase 1 targets papers, official blogs, and repos by builders. Summaries are not sources. |
+| Used native fetch tools or `curl` on URLs while `/read` was installed | Phase 1 fetch is not optional. `/read` owns the proxy cascade, paywall detection, and platform routing. Bypassing it silently loses coverage on paywalled, JS-heavy, or Chinese-platform pages. |
+| Treated a convincing explainer as ground truth | Ask: does this appear in at least two different contexts from the same source? |
+| Phase 2 wrote summaries instead of teaching the concept | Digest means building the mental model. Summarizing is not digesting. |
+| AI offered to upload the article to a blog or social platform after the user said it was ready | Stop at confirmation. Publishing is the user's action, not yours. |
+| Turned a project review into a generic Waza rule without filtering | Promote only repeated workflow behavior. Leave project-specific commands, paths, and safety constraints in that project |

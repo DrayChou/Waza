@@ -1,164 +1,165 @@
 ---
 name: think
-description: Invoke before writing any code for a new feature, design, or architecture decision. Turns rough ideas into approved plans with validated structure. Not for bug fixes or small edits.
-version: 3.2.0
-allowed-tools:
-  - Read
-  - Grep
-  - Glob
-  - Bash
-  - WebSearch
-  - AskUserQuestion
+description: "Turns rough ideas into approved, decision-complete plans with validated structure before coding. Use when users ask 出方案/给方案/深入分析/怎么设计/有没有必要/值不值得/plan this/how should I/should we keep this for features, architecture, or value judgments. Not for bug fixes or small edits."
+when_to_use: "出方案, 给方案, 深入分析, 怎么设计, 用什么方案, 判断一下, 有没有必要, 值不值得, what's the best approach, plan this, how should I, should we keep this"
+dispatch_intent: "New feature, architecture, how should I design this, value judgment, executable plan, handoff"
 ---
 
 # Think: Design and Validate Before You Build
 
-Turn a rough idea into a clear, approved plan, then pressure-test the architecture before a line of code is written.
+Prefix your first line with 🥷 inline, not as its own paragraph.
 
-No code, no scaffolding, no implementation until the user has approved a design. No code snippets, no pseudo-code, no "just to illustrate" examples. Words and diagrams only.
+Turn a rough idea into an approved plan. No code, no scaffolding, no pseudo-code until the user approves.
 
-Give opinions directly. Avoid: "That's an interesting approach," "There are many ways to think about this," "You might want to consider." Take a position and state what evidence would change it.
+Give opinions directly. Take a position and state what evidence would change it. Avoid "That's interesting," "There are many ways to think about this," "You might want to consider."
 
-## Phase 0: Assess Depth
+## Outcome Contract
 
-Before reading any files, assess the task scope from the user's description.
+- Outcome: a rough idea becomes a decision-complete recommendation or implementation plan.
+- Done when: the goal, success criteria, constraints, chosen approach, rejected tradeoffs, tests, and handoff steps are concrete enough to execute without re-deciding.
+- Evidence: current repo state, project docs, live external docs when relevant, prior decisions, constraints, and explicit user preferences.
+- Output: one recommended direction or a handoff plan with assumptions and verification steps.
 
-| Depth | Characteristics | Work Units |
-|-------|----------------|------------|
-| **Lightweight** | Single file, config change, simple addition. Low ambiguity. | 2-4 |
-| **Standard** | Multi-file feature, integration, moderate complexity. | 3-6 |
-| **Deep** | New system, cross-cutting change, unfamiliar domain, or high risk. | 4-8+ |
+## Lightweight Mode
 
-A "work unit" is one focused implementation step that produces a testable result.
+Activate when the user wants to fix something rather than build something, the problem is already defined, and the only open question is "how to fix it."
 
-State the depth in one line: "Depth: Lightweight / Standard / Deep -- reason."
+Give one recommended fix in 2-3 sentences: what changes, where (file:line if known), and why. Name the brute-force version in one line first; default to it unless the user wants elegance. List involved files, flag explicitly if more than 5. State one risk. Wait for approval before implementing.
 
-**Auto-reclassification:** if Phase 1 or Phase 2 reveals an external contract surface (third-party API, undocumented system behavior, shared type exported to callers), bump up one depth level and note why.
+Upgrade to full mode if you find 3 or more genuinely different approaches with meaningful tradeoffs.
 
-## Phase 1: Understand the Problem
+## Evaluation Mode
 
-Review recent commit history and read CLAUDE.md (if present). Then read the files the user mentioned or that are obviously related to the idea (entry points, main modules). Ask if it is unclear which files are relevant. Then work through the idea one question at a time: purpose first, constraints second, success criteria third.
+Activate when the user wants to judge whether something should exist, be kept, exposed, or removed. Typical triggers: "判断一下", "有没有必要", "值不值得", "should we keep this", "is this worth it", "我不想做", "商业前景", "有没有必要继续".
 
-**Check the knowledge store first.** If the project has a `docs/solutions/` directory, search for prior decisions or related problems before proposing anything. If matches are found, read them before Phase 2. Prior solutions may contain decisions, tradeoffs, or known failure modes that eliminate false starts.
+State the evaluation target and what kind of judgment is needed (value, risk, or tradeoff). Take a current-state snapshot: what it does, who uses it, what depends on it; grep and read before opining.
 
-**Confirm the working path before touching the filesystem.** Before creating, moving, or writing files, verify the absolute path with `pwd` or `git rev-parse --show-toplevel`. Do not assume `~/project` and `~/www/project` are the same. If the user gives a relative or ambiguous path, ask once to confirm the full absolute path.
+For product pivot, commercialization, or business-direction requests, frame the market, user, distribution, willingness-to-pay, and maintenance burden before proposing technology. Do not assume open source, do not assume implementation comes first, and do not hide a business judgment inside a technical plan.
 
-**State all dependencies before asking for credentials.** If the task requires API keys, tokens, or third-party accounts beyond what the user named, list every dependency with a one-line explanation of why it is needed, before asking for any of them. Do not surface credential requests mid-implementation.
+**Output format (Kill/Keep/Pivot):**
 
-**Verify external tool availability before starting.** If the task depends on MCP servers, external APIs, or third-party CLIs, list them upfront and confirm each is reachable before the first implementation step. A plan that requires a tool that is not loaded is not a plan.
+Line 1: one of **Kill** / **Keep** / **Pivot** as the verdict. No preamble.
 
-**Check existing work on GitHub.** Before designing, search for related issues and PRs. If `gh` is not installed, install it first.
+Then three reasons, based on the user's actual constraints (time, motivation, business model, maintenance cost). Not generic tradeoffs.
 
-Challenge whether it is the right problem:
-- What does the user actually want to happen? Not the feature described, the outcome they care about.
-- What changes if nothing is built? Is there a cheaper path to the same result?
-- What already exists in the codebase that covers part of this? Map sub-problems to existing code before proposing new code.
-- Does this decision hold up in 12 months, or does it create drag?
+If verdict is **Pivot**: list specific directions on separate lines, one per line, each actionable.
 
-## Scope Mode
+If verdict is **Kill** or major rework: list impact scope (files, dependents, migration cost) before asking for confirmation.
 
-Name the mode at the start:
+Do not use a build-plan template here. Do not list options. Give one verdict.
 
-| Mode | When | Posture |
-|------|------|---------|
-| **expand** | New feature, blank slate | Push scope up. Ask what would make this 10x better. |
-| **shape** | Adding to existing | Hold the baseline, surface expansion options one at a time. |
-| **hold** | Bug fix, tight constraints | Scope is locked. Make it correct. |
-| **cut** | Plan that grew too large | Strip to the minimum that solves the real problem. |
+Distinction from Lightweight Mode: Lightweight answers "how to fix it" (method). Evaluation answers "should it exist" (value judgment).
 
-## Phase 2: Propose Approaches
+## Before Reading Any Code
 
-Offer 2 or 3 options with tradeoffs and a recommendation. For each: one-sentence summary, effort, risk, two strongest reasons for and against, what existing code it builds on. Always include one minimal option and one architecturally complete option.
+- Confirm the working path: `pwd` or `git rev-parse --show-toplevel`. Never assume `~/project` and `~/www/project` are the same.
+- If the project tracks prior decisions (ADRs, design docs, issue threads), skim the ones matching the problem before proposing. Skip if none exist.
+- If the plan involves a default value, env var, or config field, open the project's actual config file (e.g. `app.config.json`, `tauri.conf.json`, `package.json`, `.env`) and lift the live value. Never quote a default from memory or docs.
 
-When comparing, ask:
-- Which decisions are hard to undo? Slow down on those.
-- What would cause this to fail? Design away from that first.
-- What are we explicitly not building?
-- Would the same result hold with less: fewer fields, fewer states, fewer APIs?
+## Durable Context Preflight
 
-Before presenting the recommendation: attack it. Ask yourself what would make this approach fail. If the attack holds, the approach deforms, and you should present the deformed version instead. If the attack shatters the approach entirely, discard it and tell the user why.
+See [rules/durable-context.md](../../rules/durable-context.md) for when to read durable context, the read-order budget, and the memory-type mapping (planning constraints, reusable patterns, facts that need re-verification against current state).
 
-Get approval before proceeding. If the user rejects the design, do not start over from scratch. Ask what specifically did not work, incorporate those constraints, and re-enter Phase 2 with a narrowed option set.
+For `/think`, planning constraints are `decision`, `preference`, and `principle` entries; current repo state, live docs, logs, tests, and remote state override memory. Lock durable decisions and preferences before asking questions. Do not ask the user to restate an intent that the durable context already establishes unless it is risky, stale, or contradicted by current state.
 
-## Phase 3: Validate the Architecture
+Before outputting any plan, scan the project's `AGENTS.md`, `CLAUDE.md`, `.claude/rules/*.md`, and any local agent-memory summary if the user pointed at one. If the proposed plan contradicts a "hard rule", "never X", "must Y", or "prefer Z" stated in those files, surface the contradiction in the plan output (one sentence: which rule, which step contradicts it, recommended resolution). Do not silently override the rule. If the rule blocks the plan, stop and ask before continuing.
 
-Once a direction is approved, check structural correctness before implementation starts:
+## Check for Official Solutions First
 
-**Scope.** Grep for existing implementations of each sub-problem. Flag anything deferrable. More than 8 files or 2 new services? Acknowledge it explicitly.
+Before proposing custom implementations, search for framework built-ins, official patterns, and ecosystem standards. Use Context7 MCP tools to query latest docs when available. If an official solution exists, it is the default recommendation unless you can articulate why it is insufficient for this specific case.
 
-**Dependencies and data flow.** If more than 3 components exchange data, draw an ASCII diagram. Look for cycles and hidden coupling. Trace the main path, then break it: nil input, empty collection, upstream timeout, partial failure.
+## Propose Approaches
 
-**Test coverage.** List every meaningful path: happy path, error branches, edge cases. List gaps with file, assertion, test type. Any bug fix without a reproducing test is not done.
+Give one recommended approach with rationale. Include effort, risk, and what existing code it builds on. Mention one alternative only if the tradeoff is genuinely close (>40% chance the user would prefer it). Always include one minimal option.
 
-**Risk.** Name every component whose loss degrades the system. Can this be rolled back without touching data? Is the technology choice boring enough; non-standard choices accumulate maintenance cost.
+When the plan is about distilling lessons from one project into a reusable skill set or shared rules, split the plan into **promote** and **do not promote**. Promote only reusable workflow constraints. Explicitly reject project-specific commands, paths, release checklists, safety boundaries, and private local context unless the user asks to update that project itself.
 
-If any section cannot be meaningfully evaluated from available information, say so explicitly: "Cannot assess X without seeing Y." Do not guess to fill the gap.
+For the recommendation, identify the most fragile assumption (premise collapse) and state it explicitly: "This plan assumes X. If X does not hold, Y happens." If the assumption is load-bearing and fragile, deform the design to survive its failure.
 
-**No placeholders in approved plans.** Before the user approves, every step must be concrete. Forbidden patterns: TBD, TODO, "implement later", "similar to step N", "details to be determined", "as needed". A plan with placeholders is not a plan. It is a promise to plan later.
+**Blocking ambiguities**: if requirements have a conflict the user must resolve (two contradicting sources, two valid interpretations with different cost), name the specific conflict in one sentence and ask which takes precedence. Do not silently pick.
 
-## Phase 4: Confidence Check
+**Additional attack angles** (run only when the plan involves external dependencies, high concurrency, or data migration):
 
-Before handing off to implementation, score confidence on three axes:
+| Attack angle | Question |
+|---|---|
+| Dependency failure | If an external API, service, or tool goes down, can the plan degrade gracefully? |
+| Scale explosion | At 10x data volume or user load, which step breaks first? |
+| Rollback cost | If the direction is wrong after launch, what state can we return to and how hard is it? |
 
-1. **Problem understood?** Can I state in one sentence what the user actually needs and why?
-2. **Approach is the simplest that works?** Is there a cheaper path I have not considered?
-3. **Unknowns are resolved or explicitly deferred?** No TBDs hidden in the plan.
+If an attack holds, deform the design to survive it. If it shatters the approach entirely, discard it and tell the user why. Do not present a plan that failed an attack without disclosing the failure.
 
-If any axis is low: loop back. Low on (1) returns to Phase 1. Low on (2) returns to Phase 2. Low on (3) returns to Phase 3 and names each unresolved unknown explicitly.
+Get approval before proceeding. If the user rejects, ask specifically what did not work. Do not restart from scratch.
 
-If all three are solid: state the confidence assessment in 2-3 sentences at the end of the approved design summary, then stop. Do not proceed into implementation.
+## Validate Before Handing Off
 
-## Implementation Protocol
+- More than 8 files or 1 new service? Acknowledge it explicitly.
+- More than 3 components exchanging data? Draw an ASCII diagram. Look for cycles.
+- Every meaningful test path listed: happy path, errors, edge cases.
+- Can this be rolled back without touching data?
+- Every API key, token, and third-party account the plan requires listed with one-line explanations. No credential requests mid-implementation.
+- Every MCP server, external API, and third-party CLI the plan depends on verified as reachable before approval.
 
-Once the design is approved, enforce one behavior per cycle.
+**No placeholders in approved plans.** Every step must be concrete before approval. Forbidden patterns: TBD, TODO, "implement later," "similar to step N," "details to be determined." A plan with placeholders is a promise to plan later.
 
-**RED**: Write the smallest test that proves the behavior is missing. Run it. It must fail for the right reason, not from a typo or missing import.
+**Phase independence.** If the plan has multiple phases, each phase must be independently mergeable: after Phase N ships, the system is in a usable state, even if N+1 never lands. Plans that require all phases to complete before anything works are fragile (one stuck phase blocks the whole release) and waste review effort. If the work cannot be cut into mergeable phases, say so and ship it as one phase instead of pretending it is staged.
 
-**GREEN**: Write the minimum code to pass the test. No refactor, no extras.
+**Plan red flags (self-check before handoff):**
+- A phase depends on the next phase to be useful (cannot ship alone).
+- A "Phase 0: investigate / spike" exists. Investigation belongs before the plan, not inside it.
 
-**REFACTOR**: Remove duplication, improve names. Re-run tests after each step.
+Either red flag means the plan is not ready. Resolve it before handing off.
 
-Do not write production code before a failing test. "Small change" and "obviously works" are not exceptions.
+## Implementation Handoff
 
-Before claiming done:
+A finished plan must be executable by another engineer or agent without re-deciding the direction. Include:
 
-```
-Behavior:   [one sentence]
-RED seen:   yes/no
-GREEN seen: yes/no
-Verify:     [command] -> pass/fail
-```
+- Scope and non-scope.
+- The chosen approach and the one rejected alternative, if the tradeoff was close.
+- Public API, schema, command, config, or file-interface changes, if any.
+- Verification commands and manual acceptance checks.
+- Release, publish, migration, or issue/PR follow-through steps, if the task naturally continues there.
+- Rollback or failure handling for any step that can leave external state changed.
 
-If RED or GREEN was not observed, status is not complete.
+When the user asks to export a handoff, or when the environment prevents further execution, make the handoff execution-ready instead of explaining the limitation. Include file targets, key constants or selectors, exact commands, runtime or visual checklist, and risk boundaries. If the work depends on a screenshot or artifact, name the artifact and the pass/fail delta.
+
+When the user later says "Implement the plan", "可以干", "直接改", "整", or equivalent, treat that as approval of the written plan. Do not re-litigate the design. State which plan is being executed, check for obvious drift in the repo, and proceed. If the environment has changed enough that the plan is unsafe, name the specific drift and stop before editing.
 
 ## Gotchas
 
-Real failures from prior sessions, in order of frequency:
-
-- **Wrong path assumed.** Moved files to `~/project` when the repo was at `~/www/project`. Always run `pwd` or `git rev-parse --show-toplevel` before the first filesystem operation.
-- **Credentials surfaced mid-build.** Asked for DashScope API key after three implementation steps. List every dependency with a one-line explanation of why it is needed, before starting.
-- **Analyzed when execution was requested.** User said "帮我做" and got three options. "帮我做," "优化," "改回去" = execute immediately. No option framework.
-- **Designed around a tool that wasn't available.** Planned an MCP-dependent workflow without checking if the MCP server was loaded. Verify external tool availability before the first design step.
-- **Rejected design restarted from scratch.** User said the direction was wrong. Should have asked what specifically failed and re-entered Phase 2 with narrowed constraints, not a blank slate.
-- **Assumed regional API variants were identical.** Shengwang (China) and Agora (International) have different endpoints, auth schemes, and supported vendors. Built against the wrong one. List all regional differences before writing integration code.
-- **Added a new runtime without asking.** Followed official docs' FastAPI examples into a Next.js project, creating a Python backend nobody wanted. Translate doc examples to the user's existing stack; never add a new language or runtime without explicit approval.
+| What happened | Rule |
+|---------------|------|
+| Moved files to `~/project`, repo was at `~/www/project` | Run `pwd` before the first filesystem operation |
+| Asked for API key after 3 implementation steps | List every dependency before handing off |
+| User said "just do it" or equivalent approval | Treat as approval of the recommended option. State which option was selected, finish the plan. Do not implement inside `/think`. |
+| Planned MCP workflow without checking if MCP was loaded | Verify tool availability before handing off, not mid-implementation |
+| Rejected design restarted from scratch | Ask what specifically failed, re-enter with narrowed constraints |
+| User said "just fix X" and skipped /think | If the fix touches 3+ files or needs a method choice, pause and run Lightweight Mode |
+| User approved a concrete plan and the agent debated the plan again | Execute the approved plan. Only stop for repo drift, missing permissions, or unsafe external state |
+| Picked a regional or locale-specific API variant without checking | List all regional or locale differences before writing integration code |
+| Introduced a second language or runtime into a single-stack project | Never add a new language or runtime without explicit approval |
+| User said "判断一下这个报错" and got Evaluation Mode | "判断一下" + error/bug context = debugging, route to `/hunt`. Evaluation Mode is for value/existence judgments only |
+| User asked to "沉淀到 Waza" after a project review | First separate transferable Waza capability from project facts. Do not import that project's commands, paths, or release rules into Waza |
 
 ## Output
-
-For each issue found in Phase 3:
-- What it is (1 sentence)
-- Specific recommendation ("move X to Y because Z", not "consider refactoring")
-- Fix size: small, medium, large
-- Risk if ignored: low, medium, high
 
 **Approved design summary:**
 - **Building**: what this is (1 paragraph)
 - **Not building**: explicit out-of-scope list
 - **Approach**: chosen option with rationale
 - **Key decisions**: 3-5 with reasoning
-- **Unknowns**: anything needing resolution during implementation
+- **Unknowns**: only items that are explicitly deferred with a stated reason and a clear owner. Not vague gaps. If an unknown blocks a decision, loop back before approval.
 
-Close with one-line status per architecture section: clear, flagged, or skipped with reason.
+After the user approves the design, stop. Implementation starts only when requested.
+
+## After Approval
+
+When the plan is approved, output this guidance:
+
+```
+Plan approved. To implement: say "implement this plan". After implementation, run `/check` to review before merging or release follow-through.
+```
+
+Keep it concise (2-3 sentences max). The user decides when to start implementation.
 
 ## Handoff to Implementation
 
@@ -168,39 +169,4 @@ Design approved and ready to execute? Hand off the plan to a persistent file-bas
 bash ${CLAUDE_PLUGIN_ROOT}/../planning-with-files-zh/scripts/init-session.sh <feature-name>
 ```
 
-This creates `docs/计划/{YYYYMMDD}-{feature}/` containing `task_plan.md`, `findings.md`, `progress.md`. Copy the approved phases from Phase 3 into `task_plan.md`. The planning-with-files-zh skill's hooks then track progress from there.
-
-For spec-kit style artifacts, also save to the same directory:
-- `SPEC.md` — requirements (what & why)
-- `PLAN.md` — technical approach (how)
-
-Both are optional but useful when the feature spans multiple weeks or modules.
-
-## Preflight 对齐模板（可选使用）
-
-After Phase 2 approval, output the following structured summary for explicit user alignment:
-
-```markdown
-## Preflight 对齐
-
-### 1) 目标/范围/约束
-- 目标：...
-- 范围：...
-- 约束/禁区：...
-
-### 2) 计划修改文件
-- 已确认：
-  - path/a
-  - path/b
-- 待确认：
-  - path/c（原因：...）
-
-### 3) 完成标准
-- 必做验证：...
-- 可选验证：...
-
-### 4) 需要你确认
-1. ...?
-2. ...?
-```
-
+This creates `docs/计划/{YYYYMMDD}-{feature-name}/task_plan.md` for session recovery and multi-step tracking.

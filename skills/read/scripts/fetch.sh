@@ -1,38 +1,105 @@
 #!/usr/bin/env bash
-# Fetch a URL as Markdown via proxy cascade.
-# Special thanks to joeseesun for the excellent qiaomu-markdown-proxy project,
-# which inspired the proxy cascade design and fallback logic in this script.
+# Fetch a URL as Markdown.
+#
+# Privacy-first cascade:
+#   Default (no --use-proxy): local extractor only. URL is never sent to a
+#   third party. Best quality when readability-lxml + html2text are pip-
+#   installed; degrades to a stdlib-only stripper otherwise.
+#
+#   With --use-proxy: tries local first, then defuddle.md, then r.jina.ai.
+#   Use this for JS-heavy pages, X/Twitter, paywalls, or anything the local
+#   extractor cannot reach. Be aware: the URL is sent to those third-party
+#   services and may be cached or logged. Never feed sensitive URLs through
+#   --use-proxy.
+#
+# Every tier writes a structured stderr line:
+#   [fetch] tier=<local|defuddle|jina> status=<ok|fail|skip> reason="..."
+#
+# Special thanks to joeseesun for the qiaomu-markdown-proxy project, which
+# inspired the proxy cascade design:
 # https://github.com/joeseesun/qiaomu-markdown-proxy
-# Usage: fetch.sh <url> [proxy_url]
-# Example: fetch.sh https://example.com http://127.0.0.1:7890
+#
+# Usage:
+#   fetch.sh <url> [proxy_url]
+#   fetch.sh --use-proxy <url> [proxy_url]
 set -euo pipefail
 
-URL="${1:?Usage: fetch.sh <url> [proxy_url]}"
+USE_PROXY=0
+if [ "${1:-}" = "--use-proxy" ]; then
+  USE_PROXY=1
+  shift
+fi
+
+URL="${1:?Usage: fetch.sh [--use-proxy] <url> [proxy_url]}"
 PROXY="${2:-}"
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# shellcheck disable=SC2329,SC2317  # called indirectly via _with_retry / _try_once
 _curl() {
   if [ -n "$PROXY" ]; then
-    https_proxy="$PROXY" http_proxy="$PROXY" curl -sL "$@"
+    https_proxy="$PROXY" http_proxy="$PROXY" curl -sfL "$@"
   else
-    curl -sL "$@"
+    curl -sfL "$@"
   fi
 }
 
 _has_content() {
-  [ "$(echo "$1" | wc -l)" -gt 5 ] && echo "$1" | grep -qv "Don't miss what's happening"
+  local content="$1"
+  [ "$(printf '%s' "$content" | wc -l)" -gt 5 ] || return 1
+  # Reject pages dominated by login walls, captchas, or bot challenges that
+  # otherwise pass the line-count check. Add new markers here, not new branches.
+  if printf '%s' "$content" | grep -qE "Don't miss what's happening|Sign in to continue|Please sign in|Log in to continue|请登录|登录后查看|机器人验证|人机验证|Just a moment\.\.\.|Checking your browser" 2>/dev/null; then
+    return 1
+  fi
+  return 0
 }
 
-# 1. defuddle.md - cleaner output with YAML frontmatter
-OUT=$(_curl "https://defuddle.md/$URL" 2>/dev/null || true)
-if _has_content "$OUT"; then echo "$OUT"; exit 0; fi
+_try_once() {
+  local out
+  out=$("$@" 2>/dev/null || true)
+  if _has_content "$out"; then echo "$out"; return 0; fi
+  return 1
+}
 
-# 2. r.jina.ai - wide coverage, preserves image links
-OUT=$(_curl "https://r.jina.ai/$URL" 2>/dev/null || true)
-if _has_content "$OUT"; then echo "$OUT"; exit 0; fi
+_with_retry() {
+  _try_once "$@" && return 0
+  sleep 2
+  _try_once "$@" && return 0
+  return 1
+}
 
-# 3. agent-fetch - last resort local tool
-OUT=$(npx --yes agent-fetch "$URL" --json 2>/dev/null || true)
-if [ -n "$OUT" ]; then echo "$OUT"; exit 0; fi
+# Tier 1: local extractor. Always tried first.
+if OUT=$(python3 "$SCRIPT_DIR/fetch_local.py" "$URL" 2>/tmp/fetch-local.err); then
+  cat /tmp/fetch-local.err >&2 2>/dev/null || true
+  echo "$OUT"
+  rm -f /tmp/fetch-local.err
+  exit 0
+fi
+cat /tmp/fetch-local.err >&2 2>/dev/null || true
+rm -f /tmp/fetch-local.err
 
-echo "ERROR: All fetch methods failed for: $URL" >&2
+# Without --use-proxy, stop here. URL never leaves the machine.
+if [ "$USE_PROXY" -eq 0 ]; then
+  echo "[fetch] status=fail reason=\"local extractor failed; rerun with --use-proxy to try defuddle.md and r.jina.ai (URL will be sent to those services)\"" >&2
+  exit 1
+fi
+
+# Tier 2: defuddle.md (third party; user opted in via --use-proxy).
+if OUT=$(_with_retry _curl "https://defuddle.md/$URL"); then
+  echo "[fetch] tier=defuddle status=ok" >&2
+  echo "$OUT"
+  exit 0
+fi
+echo "[fetch] tier=defuddle status=fail reason=\"empty or paywall-like response\"" >&2
+
+# Tier 3: r.jina.ai (third party; user opted in via --use-proxy).
+if OUT=$(_with_retry _curl "https://r.jina.ai/$URL"); then
+  echo "[fetch] tier=jina status=ok" >&2
+  echo "$OUT"
+  exit 0
+fi
+echo "[fetch] tier=jina status=fail reason=\"empty or paywall-like response\"" >&2
+
+echo "[fetch] status=fail reason=\"all tiers (local, defuddle, jina) failed for $URL\"" >&2
 exit 1
