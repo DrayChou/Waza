@@ -62,6 +62,23 @@ npx skills add tw93/Waza -a codex -g -y
 
 Install just one with `npx skills add tw93/Waza --skill think -a codex -g -y`. Codex sessions can invoke installed skills by name or link to the installed `SKILL.md` path shown by `npx skills path tw93/Waza`.
 
+**Antigravity**
+
+```bash
+npx skills add tw93/Waza -a antigravity -g -y
+npx skills add tw93/Waza -a antigravity-cli -g -y
+```
+
+Use `antigravity` for the desktop app and `antigravity-cli` for the terminal agent. Both use Waza's standard `skills/<name>/SKILL.md` layout through the skills installer.
+
+**OpenCode**
+
+```bash
+npx skills add tw93/Waza -a opencode -g -y
+```
+
+OpenCode loads Waza through its native skill tool after installation. Invoke the skills by name when the task matches `think`, `design`, `check`, `hunt`, `write`, `learn`, `read`, or `health`.
+
 **Claude Code plugin marketplace** (single-skill entries require Claude Code v2.1.143+)
 
 ```bash

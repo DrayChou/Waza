@@ -12,6 +12,8 @@ test "$(jq -r '.name' "$tmpdir/repo/package.json")" = "@tw93/waza"
 test "$(jq -r '.version' "$tmpdir/repo/package.json")" = "$version"
 test "$(jq -r '.pi.skills[0]' "$tmpdir/repo/package.json")" = "./skills"
 test "$(jq -r '.keywords[]' "$tmpdir/repo/package.json" | grep -c '^pi-package$')" -eq 1
+test "$(jq -r '.keywords[]' "$tmpdir/repo/package.json" | grep -c '^antigravity$')" -eq 1
+test "$(jq -r '.keywords[]' "$tmpdir/repo/package.json" | grep -c '^opencode$')" -eq 1
 test "$(jq -r '.publishConfig.access' "$tmpdir/repo/package.json")" = "public"
 
 if ! command -v npm >/dev/null 2>&1; then

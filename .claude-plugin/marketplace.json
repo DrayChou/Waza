@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "waza",
-  "description": "Personal skill collection for Claude Code and Codex: think, check, hunt, design, read, write, learn, and health for agent config and AI maintainability audits.",
+  "description": "Personal skill collection for Claude Code, Codex, Antigravity, OpenCode, and Pi: think, check, hunt, design, read, write, learn, and health for agent config and AI maintainability audits.",
   "owner": {
     "name": "Tw93",
     "email": "hitw93@gmail.com"

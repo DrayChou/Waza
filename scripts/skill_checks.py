@@ -644,7 +644,19 @@ def check_readme_install_command(root: Path):
             f"README PI INSTALL COMMAND: README.md must include {expected_pi!r}\n"
             f"  The Pi package install path depends on this exact string."
         )
-    print("ok: README installs nested skills and Pi package")
+    expected_agents = {
+        "Antigravity": "npx skills add tw93/Waza -a antigravity -g -y",
+        "Antigravity CLI": "npx skills add tw93/Waza -a antigravity-cli -g -y",
+        "OpenCode": "npx skills add tw93/Waza -a opencode -g -y",
+    }
+    for label, command in expected_agents.items():
+        if command not in text:
+            fail(
+                f"README {label.upper()} INSTALL COMMAND: README.md must "
+                f"include {command!r}\n"
+                f"  Waza's documented agent support depends on this exact string."
+            )
+    print("ok: README installs nested skills, Pi package, Antigravity, and OpenCode")
 
 
 def check_release_workflow_npm_surface(root: Path):

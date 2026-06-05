@@ -41,9 +41,9 @@ MARKETPLACE_TOP = {
     "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
     "name": "waza",
     "description": (
-        "Personal skill collection for Claude Code and Codex: think, check, "
-        "hunt, design, read, write, learn, and health for agent config and "
-        "AI maintainability audits."
+        "Personal skill collection for Claude Code, Codex, Antigravity, "
+        "OpenCode, and Pi: think, check, hunt, design, read, write, learn, "
+        "and health for agent config and AI maintainability audits."
     ),
     "owner": {
         "name": "Tw93",
@@ -129,8 +129,8 @@ def build_package_json(version: str) -> str:
         "name": "@tw93/waza",
         "version": version,
         "description": (
-            "Waza engineering skills for Claude Code, Codex, Pi, and "
-            "compatible coding agents."
+            "Waza engineering skills for Claude Code, Codex, Antigravity, "
+            "OpenCode, Pi, and compatible coding agents."
         ),
         "license": "MIT",
         "repository": {
@@ -144,6 +144,8 @@ def build_package_json(version: str) -> str:
             "waza",
             "claude-code",
             "codex",
+            "antigravity",
+            "opencode",
         ],
         "files": [
             "LICENSE",
