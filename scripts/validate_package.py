@@ -49,7 +49,7 @@ def main() -> int:
 
     # The packager rewrites `skills/<name>/SKILL.md` references to the inlined
     # section name. Any stragglers indicate a regex bug in the rewriter.
-    for skill in ("check", "think"):
+    for skill in EXPECTED_SKILLS:
         if f"skills/{skill}/SKILL.md" in text:
             print(
                 "POST-PACKAGE ERROR: root SKILL.md still contains nested "

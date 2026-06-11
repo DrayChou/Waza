@@ -8,22 +8,22 @@ transforms.
 import build_metadata as bm
 
 
-def test_render_readme_pins_main_to_version():
+def test_render_readme_rewrites_main_to_latest_asset():
     body = "curl https://raw.githubusercontent.com/tw93/Waza/main/scripts/setup-rule.sh"
     out = bm.render_readme(body, "9.9.9")
-    assert "tw93/Waza/v9.9.9/scripts/" in out
-    assert "tw93/Waza/main/scripts/" not in out
+    assert "https://github.com/tw93/Waza/releases/latest/download/setup-rule.sh" in out
+    assert "raw.githubusercontent.com" not in out
 
 
-def test_render_readme_repins_older_version():
+def test_render_readme_rewrites_pinned_version_to_latest_asset():
     body = "curl https://raw.githubusercontent.com/tw93/Waza/v1.2.3/scripts/setup-rule.sh"
     out = bm.render_readme(body, "9.9.9")
-    assert "tw93/Waza/v9.9.9/scripts/" in out
+    assert "https://github.com/tw93/Waza/releases/latest/download/setup-rule.sh" in out
     assert "v1.2.3" not in out
 
 
-def test_render_readme_no_change_when_already_pinned():
-    body = "curl https://raw.githubusercontent.com/tw93/Waza/v9.9.9/scripts/setup-rule.sh"
+def test_render_readme_no_change_when_already_latest_asset():
+    body = "curl https://github.com/tw93/Waza/releases/latest/download/setup-rule.sh"
     assert bm.render_readme(body, "9.9.9") == body
 
 

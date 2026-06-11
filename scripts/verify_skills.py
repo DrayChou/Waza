@@ -23,6 +23,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from skill_frontmatter import fail  # noqa: E402
 from skill_checks import (  # noqa: E402
+    check_anti_patterns_contract,
     check_attribution_leak,
     check_description_conformance,
     check_durable_context_and_paths,
@@ -33,6 +34,7 @@ from skill_checks import (  # noqa: E402
     check_outcome_contract,
     check_portable_skill_surface,
     check_readme_install_command,
+    check_release_workflow_npm_surface,
     check_references,
     check_resolver,
     check_rules_files_present,
@@ -40,6 +42,7 @@ from skill_checks import (  # noqa: E402
     check_table_pipes,
     check_trigger_overlap,
     check_waza_routing_skills,
+    check_waza_routing_triggers,
     collect_all_md,
 )
 
@@ -95,8 +98,11 @@ def main() -> int:
     check_no_root_skill(root)
     check_trigger_overlap(skill_keywords)
     check_rules_files_present(root)
+    check_anti_patterns_contract(root)
     check_waza_routing_skills(root, skill_names)
+    check_waza_routing_triggers(root)
     check_readme_install_command(root)
+    check_release_workflow_npm_surface(root)
     check_english_coaching_guard(root)
     check_attribution_leak(root)
     return 0

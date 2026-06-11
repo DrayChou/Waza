@@ -36,19 +36,23 @@ test "$(jq -r '.name' "$tmpdir/regen/package.json")" = "@tw93/waza"
 test "$(jq -r '.pi.skills[0]' "$tmpdir/regen/package.json")" = "./skills"
 test "$(jq -r '.publishConfig.access' "$tmpdir/regen/package.json")" = "public"
 
-# README install URLs must be pinned to VERSION, not floating on main.
+# README installer URLs should use latest release assets. The installer scripts
+# themselves still pin WAZA_REF to VERSION.
 copy_repo "$tmpdir/readme"
 version=$(cat "$tmpdir/readme/VERSION")
-sed -i.bak "s|tw93/Waza/v${version}/scripts/|tw93/Waza/main/scripts/|g" "$tmpdir/readme/README.md"
+sed -i.bak \
+  "s|https://github.com/tw93/Waza/releases/latest/download/setup-rule.sh|https://raw.githubusercontent.com/tw93/Waza/v${version}/scripts/setup-rule.sh|g; s|https://github.com/tw93/Waza/releases/latest/download/setup-statusline.sh|https://raw.githubusercontent.com/tw93/Waza/v${version}/scripts/setup-statusline.sh|g" \
+  "$tmpdir/readme/README.md"
 rm "$tmpdir/readme/README.md.bak"
 if (cd "$tmpdir/readme" && python3 scripts/build_metadata.py --check >"$tmpdir/readme.out" 2>"$tmpdir/readme.err"); then
-  echo "build_metadata --check should detect unpinned README URLs"; exit 1
+  echo "build_metadata --check should detect raw README installer URLs"; exit 1
 fi
-grep -q "README.md install URLs are not pinned" "$tmpdir/readme.err"
+grep -q "README.md installer URLs must use latest release assets" "$tmpdir/readme.err"
 (cd "$tmpdir/readme" && python3 scripts/build_metadata.py >"$tmpdir/readme-regen.out")
-grep -q "tw93/Waza/v${version}/scripts/" "$tmpdir/readme/README.md"
-if grep -q "tw93/Waza/main/scripts/" "$tmpdir/readme/README.md"; then
-  echo "README still has unpinned install URLs after regen"; exit 1
+grep -q "tw93/Waza/releases/latest/download/setup-rule.sh" "$tmpdir/readme/README.md"
+grep -q "tw93/Waza/releases/latest/download/setup-statusline.sh" "$tmpdir/readme/README.md"
+if grep -q "raw.githubusercontent.com/tw93/Waza/.*/scripts/setup-" "$tmpdir/readme/README.md"; then
+  echo "README still has raw installer URLs after regen"; exit 1
 fi
 
 # package.json is generated too; package version and Pi metadata must stay

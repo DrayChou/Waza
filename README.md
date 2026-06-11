@@ -62,6 +62,23 @@ npx skills add tw93/Waza -a codex -g -y
 
 Install just one with `npx skills add tw93/Waza --skill think -a codex -g -y`. Codex sessions can invoke installed skills by name or link to the installed `SKILL.md` path shown by `npx skills path tw93/Waza`.
 
+**Antigravity**
+
+```bash
+npx skills add tw93/Waza -a antigravity -g -y
+npx skills add tw93/Waza -a antigravity-cli -g -y
+```
+
+Use `antigravity` for the desktop app and `antigravity-cli` for the terminal agent. Both use Waza's standard `skills/<name>/SKILL.md` layout through the skills installer.
+
+**OpenCode**
+
+```bash
+npx skills add tw93/Waza -a opencode -g -y
+```
+
+OpenCode loads Waza through its native skill tool after installation. Invoke the skills by name when the task matches `think`, `design`, `check`, `hunt`, `write`, `learn`, `read`, or `health`.
+
 **Claude Code plugin marketplace** (single-skill entries require Claude Code v2.1.143+)
 
 ```bash
@@ -77,6 +94,10 @@ Download [waza.zip](https://github.com/tw93/Waza/releases/latest/download/waza.z
 
 **Pi coding agent**
 
+```bash
+pi install npm:@tw93/waza
+```
+
 Pi can load Waza's standard `skills/<name>/SKILL.md` layout from the repo or from the published `@tw93/waza` npm package, which exposes `pi.skills` metadata pointing at `./skills`. `/health` audits Pi settings, configured packages, and local skill roots alongside Claude Code and Codex.
 
 **Update**
@@ -86,6 +107,8 @@ npx skills update -g -y
 ```
 
 Marketplace installs use `claude plugin update <skill>`. Claude Desktop users can replace the old skill with the latest [waza.zip](https://github.com/tw93/Waza/releases/latest/download/waza.zip).
+Pi users can run `pi update npm:@tw93/waza`, or `pi update --extensions` to update all installed Pi packages.
+To hear about new versions, watch [GitHub Releases](https://github.com/tw93/Waza/releases) for Waza.
 
 ## Project Context
 
@@ -121,7 +144,7 @@ A minimal statusline for Claude Code: context window, 5-hour quota, and 7-day qu
 </div>
 
 ```bash
-curl -sL https://raw.githubusercontent.com/tw93/Waza/v3.26.0/scripts/setup-statusline.sh | bash
+curl -sL https://github.com/tw93/Waza/releases/latest/download/setup-statusline.sh | bash
 ```
 
 **Codex** has native statusline items. Add to `~/.codex/config.toml`:
@@ -144,10 +167,10 @@ Optional rule for English practice. When your prompt contains an English mistake
 
 ```bash
 # Claude Code
-curl -sL https://raw.githubusercontent.com/tw93/Waza/v3.26.0/scripts/setup-rule.sh | bash -s -- english claude-code
+curl -sL https://github.com/tw93/Waza/releases/latest/download/setup-rule.sh | bash -s -- english claude-code
 
 # Codex
-curl -sL https://raw.githubusercontent.com/tw93/Waza/v3.26.0/scripts/setup-rule.sh | bash -s -- english codex
+curl -sL https://github.com/tw93/Waza/releases/latest/download/setup-rule.sh | bash -s -- english codex
 ```
 
 ### Anti-Patterns
@@ -155,17 +178,17 @@ curl -sL https://raw.githubusercontent.com/tw93/Waza/v3.26.0/scripts/setup-rule.
 Optional always-on guardrails for cross-skill behaviors: stop acting before reading, no hallucinated paths, no scope creep, no unsolicited summaries. Skill-agnostic, applies in every session.
 
 ```bash
-curl -sL https://raw.githubusercontent.com/tw93/Waza/v3.26.0/scripts/setup-rule.sh | bash -s -- anti-patterns claude-code
+curl -sL https://github.com/tw93/Waza/releases/latest/download/setup-rule.sh | bash -s -- anti-patterns claude-code
 ```
 
-Use `codex` instead of `claude-code` for Codex. Curl URLs are pinned to the current release tag for reproducibility; swap `v3.26.0` for `main` if you want bleeding-edge scripts.
+Use `codex` instead of `claude-code` for Codex. Curl URLs use the latest GitHub release asset. Set `WAZA_REF=main` before the command if you want bleeding-edge scripts.
 
 ### Routing Hint
 
 Optional pointer that tells the host to prefer Waza skills when a request matches their triggers. Useful for Codex, Pi, and other agents that do not auto-route from skill `description`. Claude Code already routes through descriptions, so this is opt-in even there.
 
 ```bash
-curl -sL https://raw.githubusercontent.com/tw93/Waza/v3.26.0/scripts/setup-rule.sh | bash -s -- waza-routing claude-code
+curl -sL https://github.com/tw93/Waza/releases/latest/download/setup-rule.sh | bash -s -- waza-routing claude-code
 ```
 
 Use `codex` instead of `claude-code` for Codex.

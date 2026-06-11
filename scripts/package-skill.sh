@@ -16,7 +16,8 @@ cd "$ROOT"
 MANIFEST="$(mktemp)"
 FILTERED_MANIFEST="$(mktemp)"
 STAGE="$(mktemp -d)"
-trap 'rm -f "$MANIFEST" "$FILTERED_MANIFEST"; rm -rf "$STAGE"' EXIT
+VALIDATE_DIR="$(mktemp -d)"
+trap 'rm -f "$MANIFEST" "$FILTERED_MANIFEST"; rm -rf "$STAGE" "$VALIDATE_DIR"' EXIT
 
 git ls-files --cached --others --exclude-standard > "$MANIFEST"
 
@@ -65,7 +66,5 @@ echo "OK: wrote $OUT (${SIZE} bytes)"
 
 # Post-package validation lives in scripts/validate_package.py so it's
 # py_compile-checked in CI and unit-testable.
-VALIDATE_DIR="$(mktemp -d)"
-trap 'rm -rf "$VALIDATE_DIR"' EXIT
 unzip -q "$OUT" -d "$VALIDATE_DIR"
 python3 "$ROOT/scripts/validate_package.py" "$VALIDATE_DIR"

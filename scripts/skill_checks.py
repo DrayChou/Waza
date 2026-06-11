@@ -25,6 +25,15 @@ URL_PREFIXES = ("http://", "https://", "mailto:", "ftp://", "tel:", "data:")
 SEP_RE = re.compile(r'^[\s|:\-]+$')
 PERSONAL_PATH_PATTERN = re.compile(r'/(?:Users|home)/[A-Za-z0-9._-]+/')
 SKILL_REF_RE = re.compile(r'skills/([a-z][a-z0-9_-]*)/SKILL\.md')
+# Quoted user-utterance triggers in rules/waza-routing.md. Covers straight ("),
+# curly (U+201C/D), and CJK corner brackets (「」 U+300C/D, 『』 U+300E/F) so a
+# Chinese phrase in 「」 is checked just like one in straight quotes.
+QUOTED_PHRASE_RE = re.compile(
+    r'"([^"]+)"'
+    r'|\u201c([^\u201d]+)\u201d'
+    r'|\u300c([^\u300d]+)\u300d'
+    r'|\u300e([^\u300f]+)\u300f'
+)
 PROJECT_RITUAL_RE = re.compile(r'\b(?:Sparkle|MAS|Homebrew tap|Xcode scheme)\b', re.IGNORECASE)
 PRIVATE_CONTEXT_RE = re.compile(
     r'(?:\.codex/(?:sessions|memories)|rollout_summaries/|'
@@ -484,6 +493,64 @@ def check_rules_files_present(root: Path):
     print(f"ok: rules/ files present ({', '.join(required)})")
 
 
+def check_anti_patterns_contract(root: Path):
+    """Keep shared anti-pattern rules generic and mechanically sane."""
+    path = root / "rules" / "anti-patterns.md"
+    if not path.exists():
+        fail(f"MISSING ANTI-PATTERNS: expected {path}")
+
+    text = path.read_text()
+    if re.search(r"\bWaza\b", text):
+        fail(
+            "ANTI-PATTERN PROJECT NAME LEAK: rules/anti-patterns.md\n"
+            "  Anti-pattern rules are shared behavior. Keep row wording generic, "
+            "without repo or product names."
+        )
+
+    stale_terms = (
+        "Private rule leak",
+        "Project fact promoted to global skill",
+        "public Waza rules",
+        "reusable Waza skill",
+        "Keep Waza generic",
+    )
+    for term in stale_terms:
+        if term in text:
+            fail(
+                f"ANTI-PATTERN STALE SPECIALIZATION: {term!r}\n"
+                "  Merge private-context and project-fact cases into one generic public-surface rule."
+            )
+
+    rows: list[tuple[int, str]] = []
+    for line in text.splitlines():
+        if not line.startswith("| ") or line.startswith("|---"):
+            continue
+        cells = [cell.strip() for cell in line.strip("|").split("|")]
+        if not cells or not cells[0].isdigit():
+            continue
+        rows.append((int(cells[0]), cells[1] if len(cells) > 1 else ""))
+
+    expected_numbers = list(range(1, len(rows) + 1))
+    actual_numbers = [number for number, _pattern in rows]
+    if actual_numbers != expected_numbers:
+        fail(
+            "ANTI-PATTERN NUMBERING DRIFT: rules/anti-patterns.md\n"
+            f"  Expected contiguous numbering {expected_numbers}; got {actual_numbers}."
+        )
+
+    pattern_names: dict[str, int] = {}
+    for number, pattern in rows:
+        key = pattern.lower()
+        if key in pattern_names:
+            fail(
+                "ANTI-PATTERN DUPLICATE NAME: rules/anti-patterns.md\n"
+                f"  Rows {pattern_names[key]} and {number} both use {pattern!r}."
+            )
+        pattern_names[key] = number
+
+    print("ok: anti-patterns contract")
+
+
 def check_waza_routing_skills(root: Path, skill_names: set[str]):
     """rules/waza-routing.md routing table must enumerate exactly the skills
     under skills/. Structural drift only -- trigger phrases stay hand-tuned."""
@@ -518,6 +585,47 @@ def check_waza_routing_skills(root: Path, skill_names: set[str]):
     print(f"ok: rules/waza-routing.md skills match ({len(listed)} skills)")
 
 
+def check_waza_routing_triggers(root: Path):
+    """Quoted user-utterance triggers in rules/waza-routing.md must be grounded.
+
+    The routing table's prose stays hand-tuned, but any phrase in quotes is a
+    claim about what a user literally types. Each quoted phrase (split on '/',
+    whitespace-normalized) must appear in the matching skill's when_to_use, so
+    the routing hint can never advertise a trigger no skill actually claims.
+    Unquoted wording is intentionally free and is not checked here.
+    """
+    path = root / "rules" / "waza-routing.md"
+    if not path.exists():
+        return
+    norm = lambda s: re.sub(r"\s+", "", s)  # noqa: E731
+    for line in path.read_text().splitlines():
+        if not line.startswith("|"):
+            continue
+        cells = [c.strip() for c in line.split("|")]
+        if len(cells) < 3:
+            continue
+        skill = cells[1]
+        if not re.fullmatch(r"[a-z][a-z0-9_-]*", skill):
+            continue
+        skill_md = root / "skills" / skill / "SKILL.md"
+        if not skill_md.exists():
+            continue  # missing skill dir is check_waza_routing_skills' job
+        when = norm(parse_frontmatter(skill_md)["when_to_use"])
+        for match in QUOTED_PHRASE_RE.finditer(cells[2]):
+            quoted = next(g for g in match.groups() if g is not None)
+            for seg in quoted.split("/"):
+                seg_norm = norm(seg)
+                if seg_norm and seg_norm not in when:
+                    fail(
+                        f"WAZA ROUTING UNGROUNDED TRIGGER: rules/waza-routing.md "
+                        f"row '{skill}' quotes {seg!r}, but it is absent from "
+                        f"skills/{skill}/SKILL.md when_to_use.\n"
+                        f"  Quote only phrases a user actually types; align the "
+                        f"phrase with when_to_use or add it to when_to_use."
+                    )
+    print("ok: rules/waza-routing.md quoted triggers grounded")
+
+
 def check_readme_install_command(root: Path):
     """README must show the default install command users can copy-paste."""
     readme = root / "README.md"
@@ -530,7 +638,67 @@ def check_readme_install_command(root: Path):
             f"README INSTALL COMMAND: README.md must include {expected!r}\n"
             f"  Waza's public install path depends on this exact string."
         )
-    print("ok: README installs nested skills")
+    expected_pi = "pi install npm:@tw93/waza"
+    if expected_pi not in text:
+        fail(
+            f"README PI INSTALL COMMAND: README.md must include {expected_pi!r}\n"
+            f"  The Pi package install path depends on this exact string."
+        )
+    expected_agents = {
+        "Antigravity": "npx skills add tw93/Waza -a antigravity -g -y",
+        "Antigravity CLI": "npx skills add tw93/Waza -a antigravity-cli -g -y",
+        "OpenCode": "npx skills add tw93/Waza -a opencode -g -y",
+    }
+    for label, command in expected_agents.items():
+        if command not in text:
+            fail(
+                f"README {label.upper()} INSTALL COMMAND: README.md must "
+                f"include {command!r}\n"
+                f"  Waza's documented agent support depends on this exact string."
+            )
+    expected_installers = {
+        "setup-rule": "https://github.com/tw93/Waza/releases/latest/download/setup-rule.sh",
+        "setup-statusline": "https://github.com/tw93/Waza/releases/latest/download/setup-statusline.sh",
+    }
+    for label, url in expected_installers.items():
+        if url not in text:
+            fail(
+                f"README {label.upper()} URL: README.md must include {url!r}\n"
+                f"  Installer snippets should follow the latest release asset "
+                f"without per-release README churn."
+            )
+    print(
+        "ok: README installs nested skills, Pi package, Antigravity, OpenCode, "
+        "and latest installer assets"
+    )
+
+
+def check_release_workflow_npm_surface(root: Path):
+    """GitHub releases must publish the npm package that Pi consumes."""
+    workflow = root / ".github" / "workflows" / "release.yml"
+    if not workflow.exists():
+        fail(f"MISSING RELEASE WORKFLOW: expected {workflow}")
+    text = workflow.read_text()
+    required = {
+        "npm publish": "publishes @tw93/waza during release",
+        "npm view @tw93/waza": "re-reads the npm registry after publish",
+        "id-token: write": "allows npm trusted publishing through GitHub OIDC",
+        "node-version: 24": "uses a Node/npm runtime that supports trusted publishing",
+        "package-manager-cache: false": "keeps release publish jobs from caching credentials or package state",
+        "github.event.release.tag_name": "checks the GitHub release tag",
+        "package.json').pi.skills[0]": "checks Pi package metadata",
+        "dist-tags.latest": "confirms the npm latest dist-tag",
+        "scripts/setup-rule.sh": "uploads the rule installer as a latest release asset",
+        "scripts/setup-statusline.sh": "uploads the statusline installer as a latest release asset",
+    }
+    missing = [label for label, reason in required.items() if label not in text]
+    if missing:
+        fail(
+            "RELEASE WORKFLOW NPM SURFACE: .github/workflows/release.yml "
+            "must publish and verify @tw93/waza for Pi installs.\n"
+            + "\n".join(f"  missing {label!r}: {required[label]}" for label in missing)
+        )
+    print("ok: release workflow publishes npm package and installer assets")
 
 
 def check_english_coaching_guard(root: Path):

@@ -2,9 +2,9 @@
 
 ## Shared Output Marker
 
-所有技能都沿用同一个输出约定：首行内联带上 `🥷`，不要单独起段。这个约定写在各自的 `SKILL.md` 里，`verify-skills.sh` 也会校验它。
+所有技能都沿用同一个输出约定：首行内联带上 `🥷`，不要单独起段。这个约定写在各自的 `SKILL.md` 里，`scripts/verify_skills.py` 也会校验它。
 
-触发词到技能的路由表。Claude Code 通过每个 SKILL.md 的 `description` 自动匹配，这份文档是给人看的集中索引，也是 `verify-skills.sh` 的校验依据。改 SKILL.md 的适用范围时，同步改这里。
+触发词到技能的路由表。Claude Code 通过每个 SKILL.md 的 `description` 自动匹配，这份文档是给人看的集中索引，也是 `scripts/verify_skills.py` 的校验依据。改 SKILL.md 的适用范围时，同步改这里。
 
 > **Read the skill file before acting.** 两个技能都可能匹配时，两个都读。它们设计成可串联（例：`/think` → 实现 → `/check`）。
 
@@ -38,7 +38,7 @@
 | 触发 | 技能 |
 |------|------|
 | 消息含 http(s) URL / 任何网页链接 / PDF 路径 / "看一下这个", "读一下这个" | `skills/read/SKILL.md` |
-| 写作 / 改稿 / 润色 / 去 AI 味（中英文） / 推特推文 / 社交媒体文案 / launch copy / release notes 文案 | `skills/write/SKILL.md` |
+| 写作 / 改稿 / 润色 / 去 AI 味（中英文） / 本地化文案 / 多语言产品文案 / 推特推文 / 社交媒体文案 / launch copy / release notes 文案 | `skills/write/SKILL.md` |
 | 文档审阅 / 白皮书 / release notes prose 审核 / "审稿" / "check this document" | `skills/write/SKILL.md` (Document Review Mode) |
 | 深度研究一个陌生领域 / 六阶段研究到成稿 / 一批材料沉淀成文章 | `skills/learn/SKILL.md` |
 
@@ -71,7 +71,7 @@
 
 ## Latent vs Deterministic
 
-Waza 的技能都是 fat skill（Markdown 判断），底层的确定性约束走 `scripts/verify-skills.sh` 和 `rules/*.md`。新加能力时先问：
+Waza 的技能都是 fat skill（Markdown 判断），底层的确定性约束走 `scripts/verify_skills.py` 和 `rules/*.md`。新加能力时先问：
 
 - 需要判断 / 适应场景 / 追问用户？→ skill
 - 同入同出 / 只是校验和列举？→ script 或 rule

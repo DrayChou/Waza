@@ -112,4 +112,18 @@ if (cd "$tmpdir/repo8" && python3 scripts/verify_skills.py --root . >"$tmpdir/us
 fi
 grep -q 'DESCRIPTION MISSING USE-WHEN CUE: read' "$tmpdir/usewhen.err"
 
+# Case 9: ungrounded routing trigger inside CJK corner brackets 「」 is caught.
+copy_repo "$tmpdir/repo9"
+python3 -c "
+from pathlib import Path
+p = Path('$tmpdir/repo9/rules/waza-routing.md')
+t = p.read_text()
+t = t.replace('\"读一下\"', '「读一个不存在的触发词」')
+p.write_text(t)
+"
+if (cd "$tmpdir/repo9" && python3 scripts/verify_skills.py --root . >"$tmpdir/routing.out" 2>"$tmpdir/routing.err"); then
+  echo "verify-skills should reject ungrounded 「」 routing triggers"; exit 1
+fi
+grep -q 'WAZA ROUTING UNGROUNDED TRIGGER' "$tmpdir/routing.err"
+
 echo "verify-skills smoke: ok"

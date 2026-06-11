@@ -69,6 +69,14 @@ def main() -> int:
         )
         drift = True
 
+    stale_resolver = resolver - expected
+    if stale_resolver:
+        print(
+            f"ROUTING DRIFT: stale skill refs in RESOLVER.md: {sorted(stale_resolver)}",
+            file=sys.stderr,
+        )
+        drift = True
+
     if drift:
         return 1
 

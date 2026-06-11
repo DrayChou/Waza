@@ -8,6 +8,7 @@ smoke tests; here we keep the unit layer tight.
 import pytest
 
 from skill_checks import (
+    check_anti_patterns_contract,
     check_description_conformance,
     check_outcome_contract,
     check_portable_skill_surface,
@@ -121,6 +122,54 @@ def test_outcome_contract_missing_field_rejected(tmp_path, capsys):
     with pytest.raises(SystemExit):
         check_outcome_contract([path])
     assert "INCOMPLETE OUTCOME CONTRACT" in capsys.readouterr().err
+
+
+# ---- check_anti_patterns_contract -----------------------------------------
+
+
+def write_anti_patterns(root, body):
+    rules = root / "rules"
+    rules.mkdir()
+    (rules / "anti-patterns.md").write_text(body)
+
+
+def test_anti_patterns_contract_happy_path(tmp_path, capsys):
+    write_anti_patterns(
+        tmp_path,
+        "| # | Pattern | Wrong | Right |\n"
+        "|---|---------|-------|-------|\n"
+        "| 1 | Scope creep | Add unrelated work | Keep scope tight |\n"
+        "| 2 | Public skill surface leak | Copy repo rituals into shared rules | Extract generic behavior |\n",
+    )
+
+    check_anti_patterns_contract(tmp_path)
+    assert "ok: anti-patterns contract" in capsys.readouterr().out
+
+
+def test_anti_patterns_contract_rejects_project_name(tmp_path, capsys):
+    write_anti_patterns(
+        tmp_path,
+        "| # | Pattern | Wrong | Right |\n"
+        "|---|---------|-------|-------|\n"
+        "| 1 | Waza-specific rule | Copy repo rituals | Extract generic behavior |\n",
+    )
+
+    with pytest.raises(SystemExit):
+        check_anti_patterns_contract(tmp_path)
+    assert "ANTI-PATTERN PROJECT NAME LEAK" in capsys.readouterr().err
+
+
+def test_anti_patterns_contract_rejects_stale_specialization(tmp_path, capsys):
+    write_anti_patterns(
+        tmp_path,
+        "| # | Pattern | Wrong | Right |\n"
+        "|---|---------|-------|-------|\n"
+        "| 1 | Project fact promoted to global skill | Copy repo rituals | Extract generic behavior |\n",
+    )
+
+    with pytest.raises(SystemExit):
+        check_anti_patterns_contract(tmp_path)
+    assert "ANTI-PATTERN STALE SPECIALIZATION" in capsys.readouterr().err
 
 
 # ---- check_trigger_overlap ------------------------------------------------

@@ -20,16 +20,16 @@ grep -q '5h:' "$tmpdir/out2"
 grep -q '7d:' "$tmpdir/out2"
 grep -q '12%' "$tmpdir/out2"
 grep -q '34%' "$tmpdir/out3"
+grep -q '1%' "$tmpdir/out4"
 grep -q '61%' "$tmpdir/out4"
-grep -q '63%' "$tmpdir/out4"
 
-# Existing high-water mark survives a fresh session with lower live values.
+# Live values override existing high-water mark.
 tmpdir2=$(make_tmpdir)
 mkdir -p "$tmpdir2/.cache/waza-statusline"
 printf '%s\n' '{"seven_day":{"used_percentage":63,"resets_at":2000003600}}' > "$tmpdir2/.cache/waza-statusline/highwater.json"
 printf '%s' "$json1" | HOME="$tmpdir2" bash "$ROOT/scripts/statusline.sh" >"$tmpdir2/out"
 grep -q '12%' "$tmpdir2/out"
-grep -q '63%' "$tmpdir2/out"
+grep -q '34%' "$tmpdir2/out"
 
 # Empty input must not crash; both rate-limit slots fall back to "--".
 tmpdir3=$(make_tmpdir)

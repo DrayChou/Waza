@@ -88,8 +88,8 @@ read_highwater() {
 
 # apply_hw: compares live vs high-water marks for a single counter (5h or 7d).
 # Mutates four caller-scope globals by name (no return, by design):
-#   applied_pct, applied_reset       — values to render in the statusline now
-#   applied_hw_pct, applied_hw_reset — values to persist back to highwater.json
+#   applied_pct, applied_reset       : values to render in the statusline now
+#   applied_hw_pct, applied_hw_reset : values to persist back to highwater.json
 # Caller must read these immediately after the call; the next invocation
 # clobbers them. Side effect is intentional: bash can't return composite values
 # cleanly, and threading four out-params through every call site was worse.
@@ -132,18 +132,10 @@ apply_hw() {
     applied_hw_reset="$hw_reset"
     return
   fi
-  if [ "$hw_ok" = "0" ] || [ "$live_pct" -gt "$hw_pct" ] 2>/dev/null; then
-    applied_pct="$live_pct"
-    applied_reset="$live_reset"
-    applied_hw_pct="$live_pct"
-    applied_hw_reset="$live_reset"
-    return
-  fi
-
-  applied_pct="$hw_pct"
-  applied_reset="${live_reset:-$hw_reset}"
-  applied_hw_pct="$hw_pct"
-  applied_hw_reset="$hw_reset"
+  applied_pct="$live_pct"
+  applied_reset="$live_reset"
+  applied_hw_pct="$live_pct"
+  applied_hw_reset="$live_reset"
 }
 
 write_highwater() {
